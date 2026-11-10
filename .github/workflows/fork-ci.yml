@@ -1,0 +1,40 @@
+name: Fork CI
+
+on:
+  push:
+    branches: [main, v4.x]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    if: github.repository == 'jmblab/zitadel'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      NX_NO_CLOUD: 'true'
+      NX_DAEMON: 'false'
+      NX_PARALLEL: '2'
+      GOMAXPROCS: '2'
+      GOFLAGS: '-p=2'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Test API
+        run: pnpm nx run @zitadel/api:test-unit --nxBail --parallel=1
+      - name: Check generated files
+        run: git diff --exit-code

@@ -1,0 +1,175 @@
+name: Fork release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Fork version based on an upstream tag, e.g. v4.20.2-jmblab.1'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Serialize publications, including runs from different branches.
+concurrency:
+  group: fork-release
+  cancel-in-progress: false
+
+env:
+  NX_NO_CLOUD: 'true'
+  NX_DAEMON: 'false'
+  NX_PARALLEL: '2'
+  GOMAXPROCS: '2'
+  GOFLAGS: '-p=2'
+
+jobs:
+  validate:
+    if: github.repository == 'jmblab/zitadel' && github.ref_type == 'branch'
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate version and base
+        id: version
+        env:
+          VERSION: ${{ inputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$VERSION" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-jmblab\.[1-9][0-9]*$ ]]; then
+            echo 'Expected a version such as v4.20.2-jmblab.1' >&2
+            exit 1
+          fi
+          if git show-ref --verify --quiet "refs/tags/$VERSION"; then
+            echo "Tag $VERSION already exists; choose a new fork version." >&2
+            exit 1
+          fi
+          base="${VERSION%-jmblab.*}"
+          git rev-parse --verify "refs/tags/$base^{commit}"
+          git merge-base --is-ancestor "refs/tags/$base" HEAD
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  checks:
+    needs: validate
+    uses: ./.github/workflows/fork-ci.yml
+    permissions:
+      contents: read
+
+  build:
+    needs: [validate, checks]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      api_digest: ${{ steps.api.outputs.digest }}
+      login_digest: ${{ steps.login.outputs.digest }}
+    env:
+      ZITADEL_VERSION: ${{ needs.validate.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build Linux API archives and embedded console
+        run: pnpm nx run-many --nxBail -p @zitadel/api -t pack-linux-amd64,pack-linux-arm64 --parallel=1
+      - name: Build and test Login UI
+        run: pnpm nx run @zitadel/login:test-unit --nxBail --parallel=1
+      - name: Package Login UI
+        run: pnpm nx run @zitadel/login:pack-archive --nxBail --parallel=1
+      - name: Checksum release archives
+        working-directory: .artifacts/pack
+        run: sha256sum zitadel-linux-amd64.tar.gz zitadel-linux-arm64.tar.gz zitadel-login.tar.gz > checksums.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fork-release-archives
+          path: |
+            .artifacts/pack/*.tar.gz
+            .artifacts/pack/checksums.txt
+          if-no-files-found: error
+          retention-days: 7
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish API image
+        id: api
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          target: final
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/jmblab/zitadel:${{ needs.validate.outputs.version }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/jmblab/zitadel
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ needs.validate.outputs.version }}
+      - name: Publish Login image
+        id: login
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/login
+          file: apps/login/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/jmblab/zitadel-login:${{ needs.validate.outputs.version }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/jmblab/zitadel
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ needs.validate.outputs.version }}
+
+  release:
+    needs: [validate, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: fork-release-archives
+          path: archives
+      - name: Create fork tag and release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.validate.outputs.version }}
+          COMMIT: ${{ github.sha }}
+          API_DIGEST: ${{ needs.build.outputs.api_digest }}
+          LOGIN_DIGEST: ${{ needs.build.outputs.login_digest }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "JMBLab build from commit $COMMIT."
+            echo
+            echo "API: ghcr.io/jmblab/zitadel:$VERSION"
+            echo "API digest: ghcr.io/jmblab/zitadel@$API_DIGEST"
+            echo
+            echo "Login UI: ghcr.io/jmblab/zitadel-login:$VERSION"
+            echo "Login digest: ghcr.io/jmblab/zitadel-login@$LOGIN_DIGEST"
+            echo
+            echo 'Platforms: linux/amd64, linux/arm64.'
+          } > release-notes.md
+          gh release create "$VERSION" archives/* \
+            --target "$COMMIT" --title "$VERSION" \
+            --notes-file release-notes.md --prerelease --latest=false
+          cat release-notes.md >> "$GITHUB_STEP_SUMMARY"

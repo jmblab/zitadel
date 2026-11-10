@@ -22,7 +22,7 @@ permissions:
 jobs:
   lint_test_build:
     uses: ./.github/workflows/lint_test_build.yml
-    if: ${{ github.ref != 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.repository == 'zitadel/zitadel' && (github.ref != 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     permissions:
       contents: read
     with:
@@ -38,7 +38,7 @@ jobs:
       packages: write
     secrets:
       GCR_JSON_KEY_BASE64: ${{ secrets.GCR_JSON_KEY_BASE64 }}
-    if: ${{ github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.repository == 'zitadel/zitadel' && github.event_name == 'workflow_dispatch' }}
     with:
       node_version: "22"
       semantic_version: "23.0.7"
@@ -57,7 +57,7 @@ jobs:
     needs:
       - lint_test_build
       - pack
-    if: ${{ github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.repository == 'zitadel/zitadel' && github.event_name == 'workflow_dispatch' }}
     secrets:
       GCR_JSON_KEY_BASE64: ${{ secrets.GCR_JSON_KEY_BASE64 }}
       APP_ID: ${{ secrets.APP_ID }}

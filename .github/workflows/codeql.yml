@@ -19,6 +19,7 @@ concurrency:
 
 jobs:
   CodeQL-Build:
+    if: github.repository == 'zitadel/zitadel'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
