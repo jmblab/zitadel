@@ -14,6 +14,7 @@ import (
 	"github.com/zitadel/zitadel/internal/api/authz"
 	"github.com/zitadel/zitadel/internal/database"
 	"github.com/zitadel/zitadel/internal/domain"
+	"github.com/zitadel/zitadel/internal/feature"
 	"github.com/zitadel/zitadel/internal/zerrors"
 )
 
@@ -31,6 +32,97 @@ var (
 	//go:embed testdata/oidc_client_no_settings.json
 	testdataOidcClientNoSettings string
 )
+
+func TestQueries_ActiveOIDCClientByID_LoginV2Fallback(t *testing.T) {
+	instanceURI, err := url.Parse("https://instance.example.com/login")
+	require.NoError(t, err)
+	appURI, err := url.Parse("https://app.example.com/login")
+	require.NoError(t, err)
+
+	tests := []struct {
+		name        string
+		clientJSON  string
+		required    bool
+		instanceURI *url.URL
+		wantVersion domain.LoginVersion
+		wantURI     *URL
+	}{
+		{
+			name:        "required preserves application URL",
+			clientJSON:  `{"login_version":1,"login_base_uri":"https://app.example.com/login"}`,
+			required:    true,
+			instanceURI: instanceURI,
+			wantVersion: domain.LoginVersion2,
+			wantURI:     (*URL)(appURI),
+		},
+		{
+			name:        "required falls back for absent URL",
+			clientJSON:  `{"login_version":1}`,
+			required:    true,
+			instanceURI: instanceURI,
+			wantVersion: domain.LoginVersion2,
+			wantURI:     (*URL)(instanceURI),
+		},
+		{
+			name:        "required falls back for null URL",
+			clientJSON:  `{"login_version":1,"login_base_uri":null}`,
+			required:    true,
+			instanceURI: instanceURI,
+			wantVersion: domain.LoginVersion2,
+			wantURI:     (*URL)(instanceURI),
+		},
+		{
+			name:        "required falls back for empty URL",
+			clientJSON:  `{"login_version":1,"login_base_uri":""}`,
+			required:    true,
+			instanceURI: instanceURI,
+			wantVersion: domain.LoginVersion2,
+			wantURI:     (*URL)(instanceURI),
+		},
+		{
+			name:        "required without either URL leaves runtime fallback",
+			clientJSON:  `{"login_version":1,"login_base_uri":""}`,
+			required:    true,
+			wantVersion: domain.LoginVersion2,
+		},
+		{
+			name:        "required without instance URL preserves application URL",
+			clientJSON:  `{"login_version":1,"login_base_uri":"https://app.example.com/login"}`,
+			required:    true,
+			wantVersion: domain.LoginVersion2,
+			wantURI:     (*URL)(appURI),
+		},
+		{
+			name:        "optional preserves application URL and version",
+			clientJSON:  `{"login_version":1,"login_base_uri":"https://app.example.com/login"}`,
+			instanceURI: instanceURI,
+			wantVersion: domain.LoginVersion1,
+			wantURI:     (*URL)(appURI),
+		},
+		{
+			name:        "optional does not supply instance URL",
+			clientJSON:  `{"login_version":1}`,
+			instanceURI: instanceURI,
+			wantVersion: domain.LoginVersion1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := mockQuery(regexp.QuoteMeta(oidcClientQuery), []string{"client"}, []driver.Value{tt.clientJSON}, "instanceID", "clientID", true)
+			execMock(t, mock, func(db *sql.DB) {
+				q := &Queries{client: &database.DB{DB: db}}
+				ctx := authz.NewMockContext("instanceID", "orgID", "loginClient", authz.WithMockFeatures(feature.Features{
+					LoginV2: feature.LoginV2{Required: tt.required, BaseURI: tt.instanceURI},
+				}))
+				client, err := q.ActiveOIDCClientByID(ctx, "clientID", true)
+				require.NoError(t, err)
+				require.NotNil(t, client)
+				assert.Equal(t, tt.wantVersion, client.LoginVersion)
+				assert.Equal(t, tt.wantURI, client.LoginBaseURI)
+			})
+		})
+	}
+}
 
 func TestQueries_ActiveOIDCClientByID(t *testing.T) {
 	expQuery := regexp.QuoteMeta(oidcClientQuery)
