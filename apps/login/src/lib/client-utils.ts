@@ -12,8 +12,10 @@ export function handleServerActionResponse(
   router: { push: (url: string) => void },
   setSamlData: (data: { url: string; fields: Record<string, string> }) => void,
   setError: (error: string) => void,
+  setLoading: (loading: boolean) => void = () => {},
 ): boolean {
   if (!response) {
+    setLoading(false);
     return false;
   }
 
@@ -33,6 +35,7 @@ export function handleServerActionResponse(
     } else {
       console.warn("handleServerActionResponse: Blocked unsafe redirect URI:", response.redirect);
       setError("Unsafe redirect URI was blocked");
+      setLoading(false);
       return true;
     }
   }
@@ -44,15 +47,18 @@ export function handleServerActionResponse(
     } else {
       console.warn("handleServerActionResponse: Blocked unsafe SAML post URL:", response.samlData.url);
       setError("Unsafe redirect URI was blocked");
+      setLoading(false);
       return true;
     }
   }
 
   if ("error" in response && response.error) {
     setError(response.error);
+    setLoading(false);
     return true;
   }
 
+  setLoading(false);
   return false;
 }
 

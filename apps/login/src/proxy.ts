@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { buildCSP } from "./lib/csp";
 import { applyCustomHeaders } from "./lib/custom-headers";
 import { createLogger } from "./lib/logger";
+import { getOrgIconOrigins } from "./lib/org-redirects";
 import { getIframeOrigins } from "./lib/server/security-settings";
 import { getServiceConfig } from "./lib/service-url";
 
@@ -19,6 +20,8 @@ export async function proxy(request: NextRequest) {
   const organization = request.nextUrl.searchParams.get("organization");
   if (organization) {
     requestHeaders.set("x-zitadel-i18n-organization", organization);
+  } else if (process.env.DEFAULT_ORGANIZATION_ID) {
+    requestHeaders.set("x-zitadel-i18n-organization", process.env.DEFAULT_ORGANIZATION_ID);
   }
 
   // Internal infrastructure routes — skip middleware entirely.
@@ -35,6 +38,7 @@ export async function proxy(request: NextRequest) {
   // Build CSP headers using security settings fetched directly from the
   // ZITADEL API (no self-loopback through the load balancer).
   const responseHeaders = new Headers();
+  const imageOrigins = getOrgIconOrigins();
 
   const cspFetchEnabled = process.env.CSP_FETCH_ENABLED !== "false";
 
@@ -42,7 +46,7 @@ export async function proxy(request: NextRequest) {
     try {
       const iframeOrigins = await getIframeOrigins(baseUrl, instanceHost, publicHost);
 
-      responseHeaders.set("Content-Security-Policy", buildCSP({ serviceUrl: baseUrl, iframeOrigins }));
+      responseHeaders.set("Content-Security-Policy", buildCSP({ serviceUrl: baseUrl, iframeOrigins, imageOrigins }));
 
       if (!iframeOrigins) {
         responseHeaders.set("X-Frame-Options", "deny");
@@ -51,11 +55,11 @@ export async function proxy(request: NextRequest) {
       logger.error("Failed to load security settings for CSP, using default CSP", {
         error: err instanceof Error ? err.message : String(err),
       });
-      responseHeaders.set("Content-Security-Policy", buildCSP({ serviceUrl: baseUrl }));
+      responseHeaders.set("Content-Security-Policy", buildCSP({ serviceUrl: baseUrl, imageOrigins }));
       responseHeaders.set("X-Frame-Options", "deny");
     }
   } else {
-    responseHeaders.set("Content-Security-Policy", buildCSP({ serviceUrl: baseUrl }));
+    responseHeaders.set("Content-Security-Policy", buildCSP({ serviceUrl: baseUrl, imageOrigins }));
     responseHeaders.set("X-Frame-Options", "deny");
   }
 

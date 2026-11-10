@@ -103,10 +103,9 @@ export function VerifyForm({ userId, loginName, organization, requestId, code, i
           requestId: requestId,
         });
 
-        handleServerActionResponse(response, router, setSamlData, setError);
+        handleServerActionResponse(response, router, setSamlData, setError, setLoading);
       } catch {
         setError(t("errors.couldNotVerifyUser"));
-      } finally {
         setLoading(false);
       }
     },

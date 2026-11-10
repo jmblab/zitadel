@@ -4,17 +4,16 @@ import { SetPasswordForm } from "@/components/set-password-form";
 import { Translated } from "@/components/translated";
 import { UserAvatar } from "@/components/user-avatar";
 import { UNKNOWN_USER_ID } from "@/lib/constants";
+import { getEffectiveOrganizationId } from "@/lib/organization";
 import { getServiceConfig } from "@/lib/service-url";
 import { loadMostRecentSession } from "@/lib/session";
 import {
   getBrandingSettings,
-  getDefaultOrg,
   getLoginSettings,
   getPasswordComplexitySettings,
   getUserByID,
   searchUsers,
 } from "@/lib/zitadel";
-import { Organization } from "@zitadel/proto/zitadel/org/v2/org_pb";
 import { Session } from "@zitadel/proto/zitadel/session/v2/session_pb";
 import { User } from "@zitadel/proto/zitadel/user/v2/user_pb";
 import { Metadata } from "next";
@@ -34,13 +33,7 @@ export default async function Page(props: { searchParams: Promise<Record<string 
   const _headers = await headers();
   const { serviceConfig } = getServiceConfig(_headers);
 
-  let defaultOrganization;
-  if (!organization) {
-    const org: Organization | null = await getDefaultOrg({ serviceConfig });
-    if (org) {
-      defaultOrganization = org.id;
-    }
-  }
+  const defaultOrganization = await getEffectiveOrganizationId({ serviceConfig, organization });
 
   // also allow no session to be found (ignoreUnkownUsername)
   let session: Session | undefined;

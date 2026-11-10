@@ -1,9 +1,10 @@
 "use client";
 
 import { getComponentRoundness } from "@/lib/theme";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import { CheckCircleIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
 import { clsx } from "clsx";
-import { ChangeEvent, DetailedHTMLProps, forwardRef, InputHTMLAttributes, ReactNode } from "react";
+import { useTranslations } from "next-intl";
+import { ChangeEvent, DetailedHTMLProps, forwardRef, InputHTMLAttributes, ReactNode, useState } from "react";
 
 export type TextInputProps = DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement> & {
   label: string;
@@ -57,37 +58,55 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
   ) => {
     // Use theme-based roundness if not explicitly provided
     const actualRoundness = roundness || getDefaultInputRoundness();
+    const t = useTranslations("password");
+    const [showPassword, setShowPassword] = useState(false);
+    const isPassword = props.type === "password";
 
     return (
       <label className="text-12px text-input-light-label dark:text-input-dark-label relative flex flex-col">
         <span className={`mb-1 leading-3 ${error ? "text-warn-light-500 dark:text-warn-dark-500" : ""}`}>
           {label} {required && "*"}
         </span>
-        <input
-          suppressHydrationWarning
-          ref={ref}
-          className={styles(!!error, !!disabled, actualRoundness)}
-          defaultValue={defaultValue}
-          required={required}
-          disabled={disabled}
-          placeholder={placeholder}
-          autoComplete={props.autoComplete ?? "off"}
-          onChange={(e) => onChange && onChange(e)}
-          onBlur={(e) => onBlur && onBlur(e)}
-          {...props}
-        />
+        <div className="relative flex">
+          <input
+            suppressHydrationWarning
+            ref={ref}
+            className={clsx(styles(!!error, !!disabled, actualRoundness), isPassword && "pr-10")}
+            defaultValue={defaultValue}
+            required={required}
+            disabled={disabled}
+            placeholder={placeholder}
+            autoComplete={props.autoComplete ?? "off"}
+            onChange={(e) => onChange && onChange(e)}
+            onBlur={(e) => onBlur && onBlur(e)}
+            {...props}
+            type={isPassword && showPassword ? "text" : props.type}
+          />
+          {isPassword && (
+            <button
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              aria-label={t(showPassword ? "hidePassword" : "showPassword")}
+              aria-pressed={showPassword}
+              disabled={disabled}
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+            </button>
+          )}
 
-        {suffix && (
-          <span
-            className={clsx(
-              "bg-background-light-500 dark:bg-background-dark-500 absolute right-[3px] bottom-[22px] z-30 translate-y-1/2 transform p-2",
-              // Extract just the roundness part for the suffix (no padding)
-              actualRoundness.split(" ")[0], // Take only the first part (rounded-full, rounded-md, etc.)
-            )}
-          >
-            @{suffix}
-          </span>
-        )}
+          {suffix && (
+            <span
+              className={clsx(
+                "bg-background-light-500 dark:bg-background-dark-500 absolute top-1/2 right-[3px] z-30 -translate-y-1/2 transform p-2",
+                // Extract just the roundness part for the suffix (no padding)
+                actualRoundness.split(" ")[0], // Take only the first part (rounded-full, rounded-md, etc.)
+              )}
+            >
+              @{suffix}
+            </span>
+          )}
+        </div>
 
         <div className="leading-14.5px h-14.5px text-12px text-warn-light-500 dark:text-warn-dark-500 flex flex-row items-center">
           <span>{error ? error : " "}</span>

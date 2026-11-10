@@ -1,16 +1,11 @@
 // @vitest-environment node
 import { newSystemToken } from "@zitadel/client/node";
-import { exec } from "child_process";
-import { promisify } from "util";
+import { generateKeyPairSync } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-const execAsync = promisify(exec);
-
-const { stdout: pkcs1Key } = await execAsync(
-  "openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 2>/dev/null | openssl rsa -traditional 2>/dev/null",
-);
-
-const { stdout: pkcs8Key } = await execAsync("openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 2>/dev/null");
+const { privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
+const pkcs1Key = privateKey.export({ format: "pem", type: "pkcs1" }).toString();
+const pkcs8Key = privateKey.export({ format: "pem", type: "pkcs8" }).toString();
 
 describe("newSystemToken key format support", () => {
   test("should sign a JWT with a PKCS#8 key (BEGIN PRIVATE KEY)", async () => {

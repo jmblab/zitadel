@@ -3,16 +3,15 @@ import { DynamicTheme } from "@/components/dynamic-theme";
 import { RegisterForm } from "@/components/register-form";
 import { SignInWithIdp } from "@/components/sign-in-with-idp";
 import { Translated } from "@/components/translated";
+import { getEffectiveOrganizationId } from "@/lib/organization";
 import { getServiceConfig } from "@/lib/service-url";
 import {
   getActiveIdentityProviders,
   getBrandingSettings,
-  getDefaultOrg,
   getLegalAndSupportSettings,
   getLoginSettings,
   getPasswordComplexitySettings,
 } from "@/lib/zitadel";
-import { Organization } from "@zitadel/proto/zitadel/org/v2/org_pb";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
@@ -30,12 +29,7 @@ export default async function Page(props: { searchParams: Promise<Record<string 
   const _headers = await headers();
   const { serviceConfig } = getServiceConfig(_headers);
 
-  if (!organization) {
-    const org: Organization | null = await getDefaultOrg({ serviceConfig });
-    if (org) {
-      organization = org.id;
-    }
-  }
+  organization = await getEffectiveOrganizationId({ serviceConfig, organization });
 
   const legal = await getLegalAndSupportSettings({ serviceConfig, organization });
   const passwordComplexitySettings = await getPasswordComplexitySettings({ serviceConfig, organization });

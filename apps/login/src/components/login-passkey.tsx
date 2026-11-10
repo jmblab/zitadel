@@ -51,21 +51,16 @@ export function LoginPasskey({ loginName, sessionId, requestId, altPassword, org
             return;
           }
 
-          return submitLoginAndContinue(pK)
-            .catch((error) => {
-              setError(error instanceof Error ? error.message : String(error));
-              return;
-            })
-            .finally(() => {
-              setLoading(false);
-            });
+          return submitLoginAndContinue(pK).catch((error) => {
+            setError(error instanceof Error ? error.message : String(error));
+            setLoading(false);
+            return;
+          });
         })
         .catch((error) => {
           setError(error instanceof Error ? error.message : String(error));
-          return;
-        })
-        .finally(() => {
           setLoading(false);
+          return;
         });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -89,18 +84,16 @@ export function LoginPasskey({ loginName, sessionId, requestId, altPassword, org
         },
       }),
       requestId,
-    })
-      .catch((error) => {
-        console.error(error);
-        setError(t("verify.errors.couldNotRequestChallenge"));
-        return;
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    }).catch((error) => {
+      console.error(error);
+      setError(t("verify.errors.couldNotRequestChallenge"));
+      setLoading(false);
+      return;
+    });
 
     if (sessionResponse && "error" in sessionResponse && sessionResponse.error) {
       setError(sessionResponse.error);
+      setLoading(false);
       return;
     }
 
@@ -120,7 +113,7 @@ export function LoginPasskey({ loginName, sessionId, requestId, altPassword, org
         requestId,
       });
 
-      const handled = handleServerActionResponse(response, router, setSamlData, setError);
+      const handled = handleServerActionResponse(response, router, setSamlData, setError, setLoading);
 
       if (!handled) {
         if (!response) {
@@ -131,7 +124,6 @@ export function LoginPasskey({ loginName, sessionId, requestId, altPassword, org
       }
     } catch {
       setError(t("verify.errors.couldNotVerifyPasskey"));
-    } finally {
       setLoading(false);
     }
   }
@@ -149,6 +141,7 @@ export function LoginPasskey({ loginName, sessionId, requestId, altPassword, org
       .then((assertedCredential: any) => {
         if (!assertedCredential) {
           setError(t("verify.errors.couldNotRetrievePasskey"));
+          setLoading(false);
           return;
         }
 
@@ -179,8 +172,7 @@ export function LoginPasskey({ loginName, sessionId, requestId, altPassword, org
           setError(t("verify.errors.verificationFailed"));
         }
         console.error("Passkey verification error:", error);
-      })
-      .finally(() => {
+
         setLoading(false);
       });
   }
@@ -236,27 +228,21 @@ export function LoginPasskey({ loginName, sessionId, requestId, altPassword, org
           variant={ButtonVariants.Primary}
           disabled={loading}
           onClick={async () => {
-            const response = await updateOrCreateSessionForChallenge().finally(() => {
-              setLoading(false);
-            });
+            const response = await updateOrCreateSessionForChallenge();
 
             const pK = response?.challenges?.webAuthN?.publicKeyCredentialRequestOptions?.publicKey;
 
             if (!pK) {
               setError(t("verify.errors.couldNotRequestChallenge"));
+              setLoading(false);
               return;
             }
 
-            setLoading(true);
-
-            return submitLoginAndContinue(pK)
-              .catch((error) => {
-                setError(error instanceof Error ? error.message : String(error));
-                return;
-              })
-              .finally(() => {
-                setLoading(false);
-              });
+            return submitLoginAndContinue(pK).catch((error) => {
+              setError(error instanceof Error ? error.message : String(error));
+              setLoading(false);
+              return;
+            });
           }}
           data-testid="submit-button"
         >

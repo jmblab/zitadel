@@ -38,3 +38,27 @@ jobs:
         run: pnpm nx run @zitadel/api:test-unit --nxBail --parallel=1
       - name: Check generated files
         run: git diff --exit-code
+
+  login:
+    if: github.repository == 'jmblab/zitadel'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      NX_NO_CLOUD: 'true'
+      NX_DAEMON: 'false'
+      NX_PARALLEL: '2'
+      NEXT_PUBLIC_BASE_PATH: ''
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build and test Login UI at root
+        run: pnpm nx run @zitadel/login:test-unit --nxBail --parallel=1
+      - name: Check generated files
+        run: git diff --exit-code

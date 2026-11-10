@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ConsentScreen } from "./consent";
 
@@ -32,6 +32,39 @@ describe("ConsentScreen", () => {
   });
 
   afterEach(cleanup);
+
+  test.each(["approve", "deny"])("blocks both actions through a slow %s request and navigation", async (choice) => {
+    let resolve!: (value: { redirect: string }) => void;
+    const action = choice === "approve" ? approveDeviceAuthorization : denyDeviceAuthorization;
+    action.mockReturnValue(
+      new Promise((done) => {
+        resolve = done;
+      }),
+    );
+    const { getByTestId } = render(<ConsentScreen userCode="code" sessionId="session" />);
+    const approve = getByTestId("submit-button");
+    const deny = getByTestId("deny-button");
+    fireEvent.click(choice === "approve" ? approve : deny);
+    expect(approve).toBeDisabled();
+    expect(deny).toBeDisabled();
+    fireEvent.click(approve);
+    fireEvent.click(deny);
+    expect(action).toHaveBeenCalledTimes(1);
+    expect(choice === "approve" ? denyDeviceAuthorization : approveDeviceAuthorization).not.toHaveBeenCalled();
+    await act(async () => resolve({ redirect: "/signedin" }));
+    expect(push).toHaveBeenCalledWith("/signedin");
+    expect(approve).toBeDisabled();
+    expect(deny).toBeDisabled();
+  });
+
+  test.each([{ error: "denied" }, {}, undefined])("unlocks after approval cannot navigate: %j", async (response) => {
+    approveDeviceAuthorization.mockResolvedValue(response);
+    const { getByTestId } = render(<ConsentScreen userCode="code" sessionId="session" />);
+    fireEvent.click(getByTestId("submit-button"));
+    await waitFor(() => expect(getByTestId("submit-button")).not.toBeDisabled());
+    expect(getByTestId("deny-button")).not.toBeDisabled();
+    expect(push).not.toHaveBeenCalled();
+  });
 
   test("shows the user code so it can be compared with the device", () => {
     const { getByTestId } = render(<ConsentScreen userCode="ABCD-1234" sessionId="session-1" />);

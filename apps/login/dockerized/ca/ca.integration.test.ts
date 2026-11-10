@@ -109,7 +109,7 @@ describe("Custom CA Certificate Integration", () => {
           },
         ])
         .withStartupTimeout(180_000)
-        .withWaitStrategy(Wait.forHttp("/ui/v2/login/healthy", 3000))
+        .withWaitStrategy(Wait.forHttp("/healthy", 3000))
         .start();
     }, 180_000);
 
@@ -144,7 +144,7 @@ describe("Custom CA Certificate Integration", () => {
           },
         ])
         .withStartupTimeout(180_000)
-        .withWaitStrategy(Wait.forHttp("/ui/v2/login/healthy", 3000))
+        .withWaitStrategy(Wait.forHttp("/healthy", 3000))
         .start();
     }, 180_000);
 
@@ -166,7 +166,7 @@ describe("Custom CA Certificate Integration", () => {
         .withNetwork(network)
         .withExposedPorts(3000)
         .withStartupTimeout(180_000)
-        .withWaitStrategy(Wait.forHttp("/ui/v2/login/healthy", 3000))
+        .withWaitStrategy(Wait.forHttp("/healthy", 3000))
         .start();
     }, 180_000);
 

@@ -102,7 +102,7 @@ declare namespace NodeJS {
     /**
      * Optional: JSON string to configure the cache TTLs (in minutes) and size limits for specific backend API routes or global fallbacks.
      * Example: '{"defaultMinutes": 15, "longMinutes": 60, "maxSize": 200, "getBrandingSettings": 120}'
-     * 
+     *
      * Properties:
      * - \`defaultMinutes\`: The globally utilized default TTL in minutes (falls back to 15 if not set).
      * - \`longMinutes\`: The TTL utilized string for long-cached routes, like branding/translation (falls back to 60 if not set).
@@ -124,5 +124,30 @@ declare namespace NodeJS {
      * In local development (NODE_ENV=development), it is disabled by default unless explicitly set to "false".
      */
     OTEL_SDK_DISABLED?: string;
+
+    /**
+     * Optional: default organization for Login UI context, branding, translations and registration.
+     * Explicit organization and resolved user/session policies retain their context.
+     * The organization helper falls back to the API's default organization when this is unset.
+     * This does not restrict user/session discovery to the configured organization.
+     */
+    DEFAULT_ORGANIZATION_ID?: string;
+
+    /**
+     * Optional: JSON array configuring per-organization redirect links and behavior
+     * Example:
+     * [
+     *   {
+     *     "orgId": "111111111111111111",
+     *     "autoRedirect": true,
+     *     "overrideDefault": false,
+     *     "links": [
+     *       { "label": "Go to Portal", "url": "https://portal.example.com", "iconUrl": "https://example.com/icon-portal.png", "iconDarkUrl": "https://example.com/icon-portal-dark.png" },
+     *       { "label": "Docs", "url": "https://docs.example.com", "iconUrl": "https://example.com/icon-docs.svg", "iconDarkUrl": "https://example.com/icon-docs-dark.svg" }
+     *     ]
+     *   }
+     * ]
+     */
+    ORG_REDIRECTS?: string;
   }
 }

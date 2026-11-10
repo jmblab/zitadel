@@ -12,6 +12,7 @@ const BASE_DIRECTIVES: Record<string, string[]> = {
 export interface CSPOptions {
   serviceUrl?: string;
   iframeOrigins?: string[] | null;
+  imageOrigins?: string[];
 }
 
 export function buildCSP(options: CSPOptions = {}): string {
@@ -24,6 +25,10 @@ export function buildCSP(options: CSPOptions = {}): string {
 
   if (options.iframeOrigins && options.iframeOrigins.length > 0) {
     directives["frame-ancestors"] = [...options.iframeOrigins];
+  }
+
+  if (options.imageOrigins?.length) {
+    directives["img-src"] = [...directives["img-src"], ...options.imageOrigins];
   }
 
   return serializeCSP(directives);

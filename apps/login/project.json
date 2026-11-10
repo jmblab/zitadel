@@ -21,6 +21,7 @@
       "dependsOn": ["^build"],
       "inputs": [
         "default",
+        { "env": "NEXT_PUBLIC_BASE_PATH" },
         "{workspaceRoot}/pnpm-lock.yaml",
         "!{projectRoot}/.env.*",
         "!{projectRoot}/.local.env",

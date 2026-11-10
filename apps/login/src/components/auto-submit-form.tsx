@@ -9,9 +9,11 @@ type Props = {
 
 export function AutoSubmitForm({ url, fields }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
+  const submitted = useRef(false);
 
   useEffect(() => {
-    if (formRef.current) {
+    if (formRef.current && !submitted.current) {
+      submitted.current = true;
       formRef.current.submit();
     }
   }, []);

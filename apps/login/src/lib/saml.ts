@@ -6,6 +6,7 @@ import { createResponse, getLoginSettings, ServiceConfig } from "@/lib/zitadel";
 import { Code, create } from "@zitadel/client";
 import { CreateResponseRequestSchema } from "@zitadel/proto/zitadel/saml/v2/saml_service_pb";
 import { Session } from "@zitadel/proto/zitadel/session/v2/session_pb";
+import { getOrgFallbackRedirect } from "./org-redirects";
 import { isSessionValid } from "./session";
 
 type LoginWithSAMLAndSession = {
@@ -104,6 +105,13 @@ export async function loginWithSAMLAndSession({
             serviceConfig,
             organization: selectedSession.factors?.user?.organizationId,
           });
+
+          const orgRedirect = getOrgFallbackRedirect(
+            selectedSession.factors?.user?.organizationId,
+            selectedSession.factors?.user?.loginName,
+            loginSettings?.defaultRedirectUri,
+          );
+          if (orgRedirect) return { redirect: orgRedirect };
 
           if (loginSettings?.defaultRedirectUri && isSafeRedirectUri(loginSettings.defaultRedirectUri)) {
             return { redirect: loginSettings.defaultRedirectUri };

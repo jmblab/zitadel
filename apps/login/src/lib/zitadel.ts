@@ -139,6 +139,8 @@ export async function getBrandingSettings({
 }: WithServiceConfig<{
   organization?: string;
 }>) {
+  // Cover secondary/error pages without changing policy or user/session lookup scope.
+  organization = organization || process.env.DEFAULT_ORGANIZATION_ID;
   const fetcher = async () => {
     const settingsService: Client<typeof SettingsService> = await createServiceForHost(SettingsService, serviceConfig);
 

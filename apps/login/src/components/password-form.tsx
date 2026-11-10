@@ -59,10 +59,9 @@ export function PasswordForm({ loginSettings, loginName, organization, defaultOr
         requestId,
       });
 
-      handleServerActionResponse(response, router, setSamlData, setError);
+      handleServerActionResponse(response, router, setSamlData, setError, setLoading);
     } catch {
       setError(t("verify.errors.couldNotVerifyPassword"));
-    } finally {
       setLoading(false);
     }
   }
@@ -77,17 +76,20 @@ export function PasswordForm({ loginSettings, loginName, organization, defaultOr
       organization,
       defaultOrganization,
       requestId,
-    })
-      .catch(() => {
-        setError(t("errors.couldNotSendResetLink"));
-        return;
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    }).catch(() => {
+      setError(t("errors.couldNotSendResetLink"));
+      setLoading(false);
+      return;
+    });
+
+    if (!response) {
+      setLoading(false);
+      return;
+    }
 
     if (response && "error" in response) {
       setError(response.error as string);
+      setLoading(false);
       return;
     }
 

@@ -3,7 +3,7 @@
 import { coerceToArrayBuffer, coerceToBase64Url } from "@/helpers/base64";
 import { registerPasskeyLink, verifyPasskeyRegistration } from "@/lib/server/passkeys";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Alert } from "./alert";
 import { BackButton } from "./back-button";
@@ -41,6 +41,8 @@ export function RegisterPasskey({
   const [error, setError] = useState<string>("");
 
   const [loading, setLoading] = useState<boolean>(false);
+  const inFlight = useRef(false);
+  const autoSubmitted = useRef<string | undefined>(undefined);
 
   const router = useRouter();
 
@@ -87,19 +89,16 @@ export function RegisterPasskey({
       publicKeyCredential,
       sessionId: currentSessionId,
       userId: currentUserId,
-    })
-      .catch(() => {
-        setError("Could not verify Passkey");
-        return;
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    }).catch(() => {
+      setError("Could not verify Passkey");
+      setLoading(false);
+      return;
+    });
 
     return response;
   }
 
-  const submitRegisterAndContinue = useCallback(async (): Promise<boolean | void> => {
+  const registerAndContinue = useCallback(async (): Promise<boolean | void> => {
     // Require either sessionId or userId
     if (!sessionId && !userId) {
       setError("Missing session or user information");
@@ -120,27 +119,27 @@ export function RegisterPasskey({
       return;
     }
 
-    const resp = await registerPasskeyLink(regReq)
-      .catch(() => {
-        setError("Could not register passkey");
-        return;
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    const resp = await registerPasskeyLink(regReq).catch(() => {
+      setError("Could not register passkey");
+      setLoading(false);
+      return;
+    });
 
     if (!resp) {
       setError("An error on registering passkey");
+      setLoading(false);
       return;
     }
 
     if ("error" in resp && resp.error) {
       setError(resp.error);
+      setLoading(false);
       return;
     }
 
     if (!("passkeyId" in resp)) {
       setError("An error on registering passkey");
+      setLoading(false);
       return;
     }
 
@@ -149,6 +148,7 @@ export function RegisterPasskey({
 
     if (!options.publicKey) {
       setError("An error on registering passkey");
+      setLoading(false);
       return;
     }
 
@@ -161,7 +161,7 @@ export function RegisterPasskey({
       });
     }
 
-    const credentials = await navigator.credentials.create(options);
+    const credentials = await navigator.credentials.create(options).catch(() => null);
 
     if (
       !credentials ||
@@ -170,6 +170,7 @@ export function RegisterPasskey({
       !(credentials as any).rawId
     ) {
       setError("An error on registering passkey");
+      setLoading(false);
       return;
     }
 
@@ -191,18 +192,36 @@ export function RegisterPasskey({
 
     if (!verificationResponse) {
       setError("Could not verify Passkey!");
+      setLoading(false);
       return;
     }
 
     continueAndLogin(verificationResponse.loginName);
+    return true;
   }, [sessionId, userId, code, codeId, continueAndLogin]);
+
+  const submitRegisterAndContinue = useCallback(async () => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setError("");
+    try {
+      if (await registerAndContinue()) return;
+    } catch {
+      setError("An error on registering passkey");
+    }
+    inFlight.current = false;
+    setLoading(false);
+  }, [registerAndContinue]);
 
   // Auto-submit when code is provided (similar to VerifyForm)
   useEffect(() => {
     if (code) {
-      submitRegisterAndContinue();
+      const key = JSON.stringify([code, codeId, sessionId, userId]);
+      if (autoSubmitted.current === key) return;
+      autoSubmitted.current = key;
+      void submitRegisterAndContinue();
     }
-  }, [code, submitRegisterAndContinue]);
+  }, [code, codeId, sessionId, userId, submitRegisterAndContinue]);
 
   return (
     <form className="w-full">
@@ -217,6 +236,7 @@ export function RegisterPasskey({
           <Button
             type="button"
             variant={ButtonVariants.Secondary}
+            disabled={loading}
             onClick={() => {
               continueAndLogin();
             }}

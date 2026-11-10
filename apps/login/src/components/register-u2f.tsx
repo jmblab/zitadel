@@ -40,17 +40,15 @@ export function RegisterU2f({ loginName, sessionId, organization, requestId, che
       passkeyName,
       publicKeyCredential,
       sessionId,
-    })
-      .catch(() => {
-        setError("An error on verifying passkey occurred");
-        return;
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    }).catch(() => {
+      setError("An error on verifying passkey occurred");
+      setLoading(false);
+      return;
+    });
 
     if (response && "error" in response && response?.error) {
       setError(response?.error);
+      setLoading(false);
       return;
     }
 
@@ -62,22 +60,21 @@ export function RegisterU2f({ loginName, sessionId, organization, requestId, che
     setLoading(true);
     const response = await addU2F({
       sessionId,
-    })
-      .catch(() => {
-        setError("An error on registering passkey");
-        return;
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    }).catch(() => {
+      setError("An error on registering passkey");
+      setLoading(false);
+      return;
+    });
 
     if (response && "error" in response && response?.error) {
       setError(response?.error);
+      setLoading(false);
       return;
     }
 
     if (!response || !("u2fId" in response)) {
       setError("An error on registering passkey");
+      setLoading(false);
       return;
     }
 
@@ -97,7 +94,7 @@ export function RegisterU2f({ loginName, sessionId, organization, requestId, che
         });
       }
 
-      const resp = await navigator.credentials.create(options);
+      const resp = await navigator.credentials.create(options).catch(() => null);
 
       if (
         !resp ||
@@ -106,6 +103,7 @@ export function RegisterU2f({ loginName, sessionId, organization, requestId, che
         !(resp as any).rawId
       ) {
         setError("An error on registering passkey");
+        setLoading(false);
         return;
       }
 
@@ -127,6 +125,7 @@ export function RegisterU2f({ loginName, sessionId, organization, requestId, che
 
       if (!submitResponse) {
         setError("An error on verifying passkey");
+        setLoading(false);
         return;
       }
 
@@ -158,7 +157,7 @@ export function RegisterU2f({ loginName, sessionId, organization, requestId, che
             loginSettings?.defaultRedirectUri,
           );
 
-          handleServerActionResponse(callbackResponse, router, setSamlData, setError);
+          handleServerActionResponse(callbackResponse, router, setSamlData, setError, setLoading);
         } else if (loginName) {
           const callbackResponse = await completeFlowOrGetUrl(
             {
@@ -168,9 +167,14 @@ export function RegisterU2f({ loginName, sessionId, organization, requestId, che
             loginSettings?.defaultRedirectUri,
           );
 
-          handleServerActionResponse(callbackResponse, router, setSamlData, setError);
+          handleServerActionResponse(callbackResponse, router, setSamlData, setError, setLoading);
+        } else {
+          setLoading(false);
         }
       }
+    } else {
+      setError("An error on registering passkey");
+      setLoading(false);
     }
   }
 
@@ -193,7 +197,13 @@ export function RegisterU2f({ loginName, sessionId, organization, requestId, che
             className="self-end"
             variant={ButtonVariants.Primary}
             disabled={loading}
-            onClick={submitRegisterAndContinue}
+            onClick={(event) => {
+              event.preventDefault();
+              void submitRegisterAndContinue().catch(() => {
+                setError("An error on registering passkey");
+                setLoading(false);
+              });
+            }}
             data-testid="submit-button"
           >
             {loading && <Spinner className="mr-2 h-5 w-5" />} <Translated i18nKey="set.submit" namespace="u2f" />

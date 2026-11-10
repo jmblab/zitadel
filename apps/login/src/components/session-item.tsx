@@ -37,7 +37,7 @@ export function SessionItem({ session, reload, requestId }: { session: Session; 
   moment.locale(currentLocale === "zh" ? "zh-cn" : currentLocale);
   const t = useTranslations("error");
 
-  const [_loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   /**
    * Returns true when the session was removed (server-side and from the cookie).
@@ -74,16 +74,24 @@ export function SessionItem({ session, reload, requestId }: { session: Session; 
         {samlData && <AutoSubmitForm url={samlData.url} fields={samlData.fields} />}
         <Tooltip.Trigger asChild>
           <button
+            disabled={loading}
+            aria-busy={loading}
             onClick={async () => {
+              if (loading) return;
               if (valid && session?.factors?.user) {
+                setLoading(true);
                 const sessionPayload: ContinueWithSessionCommand = session;
                 if (requestId) {
                   sessionPayload.requestId = requestId;
                 }
 
-                const callbackResponse = await continueWithSession(sessionPayload);
-
-                handleServerActionResponse(callbackResponse, router, setSamlData, (e) => setError(e));
+                try {
+                  const callbackResponse = await continueWithSession(sessionPayload);
+                  handleServerActionResponse(callbackResponse, router, setSamlData, setError, setLoading);
+                } catch {
+                  setError("An internal error occurred");
+                  setLoading(false);
+                }
               } else if (session.factors?.user) {
                 setLoading(true);
                 try {
@@ -93,10 +101,9 @@ export function SessionItem({ session, reload, requestId }: { session: Session; 
                     requestId: requestId,
                   });
 
-                  handleServerActionResponse(res, router, setSamlData, (e) => setError(e));
+                  handleServerActionResponse(res, router, setSamlData, setError, setLoading);
                 } catch {
                   setError("An internal error occurred");
-                } finally {
                   setLoading(false);
                 }
               }
@@ -142,6 +149,7 @@ export function SessionItem({ session, reload, requestId }: { session: Session; 
                 onClick={async (event: React.MouseEvent) => {
                   event.preventDefault();
                   event.stopPropagation();
+                  if (loading) return;
                   if (await clearSessionId(session.id)) {
                     reload();
                   }

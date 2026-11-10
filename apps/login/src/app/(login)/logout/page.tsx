@@ -2,10 +2,10 @@ import { DynamicTheme } from "@/components/dynamic-theme";
 import { SessionsClearList } from "@/components/sessions-clear-list";
 import { Translated } from "@/components/translated";
 import { getAllSessionCookieIds } from "@/lib/cookies";
+import { getEffectiveOrganizationId } from "@/lib/organization";
 import { getServiceConfig } from "@/lib/service-url";
-import { getBrandingSettings, getDefaultOrg, listSessions, ServiceConfig } from "@/lib/zitadel";
+import { getBrandingSettings, listSessions, ServiceConfig } from "@/lib/zitadel";
 import { verifyJwt } from "@zitadel/client/node";
-import { Organization } from "@zitadel/proto/zitadel/org/v2/org_pb";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
@@ -60,17 +60,14 @@ export default async function Page(props: { searchParams: Promise<Record<string 
     }
   }
 
-  let defaultOrganization;
-  if (!organization) {
-    const org: Organization | null = await getDefaultOrg({ serviceConfig });
-    if (org) {
-      defaultOrganization = org.id;
-    }
-  }
+  const effectiveOrganization = await getEffectiveOrganizationId({
+    serviceConfig,
+    organization,
+  });
 
   let sessions = await loadSessions({ serviceConfig });
 
-  const branding = await getBrandingSettings({ serviceConfig, organization: organization ?? defaultOrganization });
+  const branding = await getBrandingSettings({ serviceConfig, organization: effectiveOrganization });
 
   const params = new URLSearchParams();
 
@@ -95,7 +92,7 @@ export default async function Page(props: { searchParams: Promise<Record<string 
             sessions={sessions}
             logoutHint={logoutHint}
             postLogoutRedirectUri={postLogoutRedirectUri}
-            organization={organization ?? defaultOrganization}
+            organization={effectiveOrganization}
           />
         </div>
       </div>

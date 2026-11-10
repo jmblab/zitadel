@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import Page from "./page";
 
 vi.mock("@/lib/zitadel", () => ({
   getBrandingSettings: vi.fn(),
   getLoginSettings: vi.fn(),
+  getDefaultOrg: vi.fn(),
   authorizeOrDenyDeviceAuthorization: vi.fn(),
 }));
 
@@ -46,6 +47,7 @@ const session = {
 describe("signedin page", () => {
   let authorizeOrDenyDeviceAuthorization: any;
   let completeDeviceAuthorization: any;
+  afterEach(() => vi.unstubAllEnvs());
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -62,6 +64,60 @@ describe("signedin page", () => {
     vi.mocked(sessionLib.loadMostRecentSession).mockResolvedValue(session as any);
     vi.mocked(sessionLib.loadSessionById).mockResolvedValue(session as any);
     vi.mocked(client.resolveRedirectUri).mockResolvedValue("/signedin");
+  });
+
+  test("respects the session organization's default redirect even when a requestId is present", async () => {
+    const zitadel = await import("@/lib/zitadel");
+    const client = await import("@/lib/client");
+    vi.mocked(zitadel.getLoginSettings).mockResolvedValue({ defaultRedirectUri: "https://default.example.com" } as any);
+    vi.stubEnv(
+      "ORG_REDIRECTS",
+      JSON.stringify([
+        {
+          orgId: "org-1",
+          autoRedirect: true,
+          overrideDefault: false,
+          links: [{ label: "Portal", url: "https://portal.example.com" }],
+        },
+      ]),
+    );
+    await Page({ searchParams: Promise.resolve({ requestId: "oidc_done", sessionId: "session-1" }) });
+    expect(zitadel.getLoginSettings).toHaveBeenCalledWith(expect.objectContaining({ organization: "org-1" }));
+    expect(zitadel.getBrandingSettings).toHaveBeenCalledWith(expect.objectContaining({ organization: "org-1" }));
+    expect(client.resolveRedirectUri).toHaveBeenCalledWith(
+      expect.objectContaining({ organization: "org-1" }),
+      "https://default.example.com",
+    );
+  });
+
+  test("uses configured organization as the fallback without changing the session search scope", async () => {
+    const zitadel = await import("@/lib/zitadel");
+    const sessionLib = await import("@/lib/session");
+    vi.mocked(sessionLib.loadMostRecentSession).mockResolvedValue(undefined);
+    vi.stubEnv("DEFAULT_ORGANIZATION_ID", "configured-org");
+    await Page({ searchParams: Promise.resolve({ loginName: "user" }) });
+    expect(zitadel.getLoginSettings).toHaveBeenCalledWith(expect.objectContaining({ organization: "configured-org" }));
+    expect(sessionLib.loadMostRecentSession).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionParams: { loginName: "user", organization: undefined } }),
+    );
+    expect(zitadel.getDefaultOrg).not.toHaveBeenCalled();
+  });
+
+  test("does not auto-redirect away from device completion even with organization autoRedirect enabled", async () => {
+    vi.stubEnv(
+      "ORG_REDIRECTS",
+      JSON.stringify([
+        {
+          orgId: "org-1",
+          autoRedirect: true,
+          overrideDefault: true,
+          links: [{ label: "Portal", url: "https://portal.example.com" }],
+        },
+      ]),
+    );
+    await Page({ searchParams: Promise.resolve({ requestId: "device_done", sessionId: "session-1" }) });
+    expect(authorizeOrDenyDeviceAuthorization).not.toHaveBeenCalled();
+    expect(completeDeviceAuthorization).not.toHaveBeenCalled();
   });
 
   // Regression test for the device authorization consent bypass: rendering this page with an

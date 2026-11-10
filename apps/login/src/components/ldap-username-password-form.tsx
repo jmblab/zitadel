@@ -62,23 +62,23 @@ export function LDAPUsernamePasswordForm({
       postErrorRedirectUrl,
       linkToSessionId,
       linkFingerprint,
-    })
-      .catch(() => {
-        setError("Could not start LDAP flow");
-        return;
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    }).catch(() => {
+      setError("Could not start LDAP flow");
+      setLoading(false);
+      return;
+    });
 
     if (response && "error" in response && response.error) {
       setError(response.error);
+      setLoading(false);
       return;
     }
 
     if (response && "redirect" in response && response.redirect) {
       return router.push(response.redirect);
     }
+
+    setLoading(false);
   }
 
   return (

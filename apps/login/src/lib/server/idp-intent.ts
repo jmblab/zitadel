@@ -3,12 +3,12 @@
 import { getSessionCookieById } from "@/lib/cookies";
 import { isClassifiedError } from "@/lib/grpc/interceptors/error-classification";
 import { createLogger } from "@/lib/logger";
+import { getEffectiveOrganizationId } from "@/lib/organization";
 import { getServiceConfig } from "@/lib/service-url";
 import {
   addIDPLink,
   createUser,
   getActiveIdentityProviders,
-  getDefaultOrg,
   getIDPByID,
   getLoginSettings,
   getOrgsByDomain,
@@ -215,8 +215,7 @@ async function resolveOrganizationForUser({
   }
 
   // Fallback to default organization if no org was resolved through discovery
-  const defaultOrg = await getDefaultOrg({ serviceConfig });
-  return defaultOrg?.id;
+  return getEffectiveOrganizationId({ serviceConfig });
 }
 
 /**

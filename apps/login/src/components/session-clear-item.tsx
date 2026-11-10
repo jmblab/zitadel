@@ -17,7 +17,7 @@ export function SessionClearItem({ session, reload }: { session: Session; reload
   moment.locale(currentLocale === "zh" ? "zh-cn" : currentLocale);
   const t = useTranslations("error");
 
-  const [_loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   /**
    * Returns true when the session was removed (server-side and from the cookie).
@@ -51,7 +51,10 @@ export function SessionClearItem({ session, reload }: { session: Session; reload
   return (
     <>
       <button
+        disabled={loading}
+        aria-busy={loading}
         onClick={async () => {
+          if (loading) return;
           if (await clearSessionId(session.id)) {
             reload();
           }

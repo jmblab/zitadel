@@ -3,10 +3,10 @@ import { DynamicTheme } from "@/components/dynamic-theme";
 import { PasswordForm } from "@/components/password-form";
 import { Translated } from "@/components/translated";
 import { UserAvatar } from "@/components/user-avatar";
+import { getEffectiveOrganizationId } from "@/lib/organization";
 import { getServiceConfig } from "@/lib/service-url";
 import { loadMostRecentSession } from "@/lib/session";
-import { getBrandingSettings, getDefaultOrg, getLoginSettings } from "@/lib/zitadel";
-import { Organization } from "@zitadel/proto/zitadel/org/v2/org_pb";
+import { getBrandingSettings, getLoginSettings } from "@/lib/zitadel";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
@@ -23,14 +23,10 @@ export default async function Page(props: { searchParams: Promise<Record<string 
   const _headers = await headers();
   const { serviceConfig } = getServiceConfig(_headers);
 
-  let defaultOrganization;
-  if (!organization) {
-    const org: Organization | null = await getDefaultOrg({ serviceConfig });
-
-    if (org) {
-      defaultOrganization = org.id;
-    }
-  }
+  const effectiveOrganization = await getEffectiveOrganizationId({
+    serviceConfig,
+    organization,
+  });
 
   // also allow no session to be found (ignoreUnkownUsername)
   const sessionFactors = await loadMostRecentSession({
@@ -43,11 +39,11 @@ export default async function Page(props: { searchParams: Promise<Record<string 
 
   const branding = await getBrandingSettings({
     serviceConfig,
-    organization: organization ?? sessionFactors?.factors?.user?.organizationId ?? defaultOrganization,
+    organization: organization ?? sessionFactors?.factors?.user?.organizationId ?? effectiveOrganization,
   });
   const loginSettings = await getLoginSettings({
     serviceConfig,
-    organization: organization ?? sessionFactors?.factors?.user?.organizationId ?? defaultOrganization,
+    organization: organization ?? sessionFactors?.factors?.user?.organizationId ?? effectiveOrganization,
   });
 
   return (
@@ -90,7 +86,7 @@ export default async function Page(props: { searchParams: Promise<Record<string 
             loginName={loginName}
             requestId={requestId}
             organization={organization} // stick to "organization" as we still want to do user discovery based on the searchParams not the default organization, later the organization is determined by the found user
-            defaultOrganization={defaultOrganization}
+            defaultOrganization={effectiveOrganization}
             loginSettings={loginSettings}
           />
         )}

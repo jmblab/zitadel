@@ -18,12 +18,39 @@ describe("getNextUrl", () => {
     vi.clearAllMocks();
     delete (process.env as any).DEFAULT_REDIRECT_URI;
     delete (process.env as any).NEXT_PUBLIC_BASE_PATH;
+    delete (process.env as any).ORG_REDIRECTS;
   });
 
   test("should use DEFAULT_REDIRECT_URI if set", async () => {
     process.env.DEFAULT_REDIRECT_URI = "https://env-override.com";
     const result = await getNextUrl(command);
     expect(result).toBe("https://env-override.com");
+  });
+
+  test.each(["", "/ui/v2/login"])("organization redirects work with base path %s", async (basePath) => {
+    process.env.NEXT_PUBLIC_BASE_PATH = basePath;
+    process.env.ORG_REDIRECTS = JSON.stringify([
+      {
+        orgId: "org",
+        autoRedirect: true,
+        overrideDefault: true,
+        links: [{ label: "Portal", url: "https://portal.example.com" }],
+      },
+    ]);
+    expect(await getNextUrl({ loginName: "user", organization: "org" }, "https://default.example.com")).toBe(
+      "https://portal.example.com",
+    );
+    process.env.DEFAULT_REDIRECT_URI = "https://override.example.com";
+    expect(await getNextUrl({ loginName: "user", organization: "org" })).toBe("https://override.example.com");
+  });
+
+  test("organization configuration does not bypass validation of the default URI", async () => {
+    process.env.ORG_REDIRECTS = JSON.stringify([
+      { orgId: "org", links: [{ label: "Portal", url: "https://portal.example.com" }] },
+    ]);
+    expect(await getNextUrl({ loginName: "user", organization: "org" }, "javascript:alert(1)")).toBe(
+      "/signedin?loginName=user&organization=org",
+    );
   });
 
   test("should use host-based redirect if DEFAULT_REDIRECT_URI is set to a path (starting with '/')", async () => {

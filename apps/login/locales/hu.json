@@ -61,6 +61,8 @@
     }
   },
   "password": {
+    "showPassword": "Jelszó megjelenítése",
+    "hidePassword": "Jelszó elrejtése",
     "verify": {
       "title": "Jelszó",
       "description": "Add meg a jelszavadat.",

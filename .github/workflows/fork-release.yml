@@ -72,6 +72,7 @@ jobs:
       login_digest: ${{ steps.login.outputs.digest }}
     env:
       ZITADEL_VERSION: ${{ needs.validate.outputs.version }}
+      NEXT_PUBLIC_BASE_PATH: ''
     steps:
       - uses: actions/checkout@v4
         with:
@@ -129,6 +130,8 @@ jobs:
         with:
           context: apps/login
           file: apps/login/Dockerfile
+          build-args: |
+            NEXT_PUBLIC_BASE_PATH=
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ghcr.io/jmblab/zitadel-login:${{ needs.validate.outputs.version }}
@@ -165,6 +168,7 @@ jobs:
             echo "API digest: ghcr.io/jmblab/zitadel@$API_DIGEST"
             echo
             echo "Login UI: ghcr.io/jmblab/zitadel-login:$VERSION"
+            echo 'Login UI is built for the root path / on a separate domain.'
             echo "Login digest: ghcr.io/jmblab/zitadel-login@$LOGIN_DIGEST"
             echo
             echo 'Platforms: linux/amd64, linux/arm64.'

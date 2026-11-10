@@ -1,4 +1,6 @@
+import { resendVerification } from "@/lib/server/verify";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { VerifyForm } from "./verify-form";
 
@@ -38,6 +40,18 @@ describe("VerifyForm", () => {
   });
 
   describe("Auto-submit Behavior", () => {
+    test("verifies a link once without sending a new email on render or rerender", async () => {
+      const form = (
+        <StrictMode>
+          <VerifyForm userId="user-1" code="123456" isInvite={false} submit />
+        </StrictMode>
+      );
+      const { rerender } = render(form);
+      await waitFor(() => expect(mockSendVerification).toHaveBeenCalledTimes(1));
+      rerender(form);
+      expect(mockSendVerification).toHaveBeenCalledTimes(1);
+      expect(resendVerification).not.toHaveBeenCalled();
+    });
     test("should call sendVerification automatically when submit=true", async () => {
       render(<VerifyForm userId="user-1" code="123456" isInvite={false} submit={true} />);
 

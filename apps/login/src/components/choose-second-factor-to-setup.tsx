@@ -5,7 +5,7 @@ import { skipMFAAndContinueWithNextUrl } from "@/lib/server/session";
 import { LoginSettings, SecondFactorType } from "@zitadel/proto/zitadel/settings/v2/login_settings_pb";
 import { AuthenticationMethodType } from "@zitadel/proto/zitadel/user/v2/user_service_pb";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "./alert";
 import { EMAIL, SMS, TOTP, U2F } from "./auth-methods";
 import { AutoSubmitForm } from "./auto-submit-form";
@@ -42,7 +42,43 @@ export function ChooseSecondFactorToSetup({
   const params = new URLSearchParams({});
 
   const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const autoSkipped = useRef(false);
   const [samlData, setSamlData] = useState<{ url: string; fields: Record<string, string> } | null>(null);
+
+  const hasSelectableFactor = loginSettings.secondFactors.some((factor) => {
+    switch (factor) {
+      case SecondFactorType.OTP:
+        return !userMethods.includes(AuthenticationMethodType.TOTP);
+      case SecondFactorType.U2F:
+        return !userMethods.includes(AuthenticationMethodType.U2F);
+      case SecondFactorType.OTP_EMAIL:
+        return emailVerified && !userMethods.includes(AuthenticationMethodType.OTP_EMAIL);
+      case SecondFactorType.OTP_SMS:
+        return phoneVerified && !userMethods.includes(AuthenticationMethodType.OTP_SMS);
+      default:
+        return false;
+    }
+  });
+
+  const skip = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await skipMFAAndContinueWithNextUrl({ userId, loginName, sessionId, organization, requestId });
+      handleServerActionResponse(response, router, setSamlData, setError, setLoading);
+    } catch {
+      setError("Could not skip MFA and continue");
+      setLoading(false);
+    }
+  }, [userId, loginName, sessionId, organization, requestId, router]);
+
+  useEffect(() => {
+    if (!force && !hasSelectableFactor && !autoSkipped.current) {
+      autoSkipped.current = true;
+      void skip();
+    }
+  }, [force, hasSelectableFactor, skip]);
 
   if (loginName) {
     params.append("loginName", loginName);
@@ -83,17 +119,11 @@ export function ChooseSecondFactorToSetup({
       </div>
       {!force && (
         <button
+          disabled={loading}
+          aria-busy={loading}
           className="hover:text-primary-light-500 dark:hover:text-primary-dark-500 text-sm transition-all"
-          onClick={async () => {
-            const skipResponse = await skipMFAAndContinueWithNextUrl({
-              userId,
-              loginName,
-              sessionId,
-              organization,
-              requestId,
-            });
-
-            handleServerActionResponse(skipResponse, router, setSamlData, setError);
+          onClick={() => {
+            if (!loading) void skip();
           }}
           type="button"
           data-testid="reset-button"

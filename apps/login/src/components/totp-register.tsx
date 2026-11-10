@@ -50,7 +50,17 @@ export function TotpRegister({ uri, loginName, sessionId, requestId, organizatio
   async function continueWithCode(values: Inputs) {
     setLoading(true);
     return verifyTOTP(values.code, loginName, organization)
-      .then(async () => {
+      .then(async (response) => {
+        if (response && "error" in response) {
+          setError(response.error);
+          setLoading(false);
+          return;
+        }
+        if (!response) {
+          setError(t("errors.couldNotVerifyCode"));
+          setLoading(false);
+          return;
+        }
         // if attribute is set, validate MFA after it is setup, otherwise proceed as usual (when mfa is enforced to login)
         if (checkAfter) {
           const params = new URLSearchParams({});
@@ -77,7 +87,7 @@ export function TotpRegister({ uri, loginName, sessionId, requestId, organizatio
               loginSettings?.defaultRedirectUri,
             );
 
-            handleServerActionResponse(callbackResponse, router, setSamlData, setError);
+            handleServerActionResponse(callbackResponse, router, setSamlData, setError, setLoading);
           } else if (loginName) {
             const callbackResponse = await completeFlowOrGetUrl(
               {
@@ -87,16 +97,16 @@ export function TotpRegister({ uri, loginName, sessionId, requestId, organizatio
               loginSettings?.defaultRedirectUri,
             );
 
-            handleServerActionResponse(callbackResponse, router, setSamlData, setError);
+            handleServerActionResponse(callbackResponse, router, setSamlData, setError, setLoading);
+          } else {
+            setLoading(false);
           }
         }
       })
       .catch((e) => {
         setError(e.message);
-        return;
-      })
-      .finally(() => {
         setLoading(false);
+        return;
       });
   }
 

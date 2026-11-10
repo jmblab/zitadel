@@ -80,10 +80,9 @@ export function RegisterFormIDPIncomplete({
         idpIntent: idpIntent,
       });
 
-      handleServerActionResponse(response, router, setSamlData, setError);
+      handleServerActionResponse(response, router, setSamlData, setError, setLoading);
     } catch {
       setError("Could not register user");
-    } finally {
       setLoading(false);
     }
   }

@@ -5,7 +5,7 @@ import { sendLoginname } from "@/lib/server/loginname";
 import { LoginSettings } from "@zitadel/proto/zitadel/settings/v2/login_settings_pb";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Alert } from "./alert";
 import { AutoSubmitForm } from "./auto-submit-form";
@@ -45,7 +45,7 @@ export function UsernameForm({
   const { register, handleSubmit, formState } = useForm<Inputs>({
     mode: "onChange",
     defaultValues: {
-      loginName: loginName ? loginName : "",
+      loginName: loginName ? loginName.trim() : "",
     },
   });
 
@@ -56,6 +56,7 @@ export function UsernameForm({
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [samlData, setSamlData] = useState<{ url: string; fields: Record<string, string> } | null>(null);
+  const autoSubmitted = useRef<string | undefined>(undefined);
 
   const submitLoginName = useCallback(
     async (values: Inputs, organization?: string) => {
@@ -63,18 +64,17 @@ export function UsernameForm({
 
       try {
         const res = await sendLoginname({
-          loginName: values.loginName,
+          loginName: values.loginName.trim(),
           organization,
           defaultOrganization,
           requestId,
           suffix,
         });
 
-        handleServerActionResponse(res, router, setSamlData, setError);
+        handleServerActionResponse(res, router, setSamlData, setError, setLoading);
         return res;
       } catch {
         setError(t("errors.internalError"));
-      } finally {
         setLoading(false);
       }
     },
@@ -83,10 +83,12 @@ export function UsernameForm({
 
   useEffect(() => {
     if (submit && loginName) {
-      // When we navigate to this page, we always want to be redirected if submit is true and the parameters are valid.
-      submitLoginName({ loginName }, organization);
+      const key = JSON.stringify([loginName.trim(), organization, defaultOrganization, requestId, suffix]);
+      if (autoSubmitted.current === key) return;
+      autoSubmitted.current = key;
+      void submitLoginName({ loginName: loginName.trim() }, organization);
     }
-  }, [submit, loginName, organization, submitLoginName]);
+  }, [submit, loginName, organization, defaultOrganization, requestId, suffix, submitLoginName]);
 
   let inputLabel = t("labels.loginname");
   if (loginSettings?.disableLoginWithEmail && loginSettings?.disableLoginWithPhone) {
@@ -109,7 +111,10 @@ export function UsernameForm({
             autoCorrect="off"
             spellCheck={false}
             autoFocus
-            {...register("loginName", { required: t("required.loginName") })}
+            {...register("loginName", {
+              required: t("required.loginName"),
+              setValueAs: (value) => (typeof value === "string" ? value.trim() : value),
+            })}
             label={inputLabel}
             data-testid="username-text-input"
             suffix={hideSuffix ? undefined : suffix}

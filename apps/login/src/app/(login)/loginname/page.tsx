@@ -2,9 +2,9 @@ import { DynamicTheme } from "@/components/dynamic-theme";
 import { SignInWithIdp } from "@/components/sign-in-with-idp";
 import { Translated } from "@/components/translated";
 import { UsernameForm } from "@/components/username-form";
+import { getEffectiveOrganizationId } from "@/lib/organization";
 import { getServiceConfig } from "@/lib/service-url";
-import { getActiveIdentityProviders, getBrandingSettings, getDefaultOrg, getLoginSettings } from "@/lib/zitadel";
-import { Organization } from "@zitadel/proto/zitadel/org/v2/org_pb";
+import { getActiveIdentityProviders, getBrandingSettings, getLoginSettings } from "@/lib/zitadel";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
@@ -31,24 +31,18 @@ export default async function Page(props: { searchParams: Promise<Record<string 
   const _headers = await headers();
   const { serviceConfig } = getServiceConfig(_headers);
 
-  let defaultOrganization;
-  if (!organization) {
-    const org: Organization | null = await getDefaultOrg({ serviceConfig });
-    if (org) {
-      defaultOrganization = org.id;
-    }
-  }
+  const effectiveOrganization = await getEffectiveOrganizationId({ serviceConfig, organization });
 
-  const loginSettings = await getLoginSettings({ serviceConfig, organization: organization ?? defaultOrganization });
+  const loginSettings = await getLoginSettings({ serviceConfig, organization: effectiveOrganization });
 
   const identityProviders = await getActiveIdentityProviders({
     serviceConfig,
-    orgId: organization ?? defaultOrganization,
+    orgId: effectiveOrganization,
   }).then((resp) => {
     return resp.identityProviders;
   });
 
-  const branding = await getBrandingSettings({ serviceConfig, organization: organization ?? defaultOrganization });
+  const branding = await getBrandingSettings({ serviceConfig, organization: effectiveOrganization });
 
   return (
     <DynamicTheme branding={branding}>
@@ -67,7 +61,7 @@ export default async function Page(props: { searchParams: Promise<Record<string 
             loginName={loginName}
             requestId={requestId}
             organization={organization} // stick to "organization" as we still want to do user discovery based on the searchParams not the default organization, later the organization is determined by the found user
-            defaultOrganization={defaultOrganization}
+            defaultOrganization={effectiveOrganization}
             loginSettings={loginSettings}
             suffix={orgDomain}
             hideSuffix={branding?.hideLoginNameSuffix}

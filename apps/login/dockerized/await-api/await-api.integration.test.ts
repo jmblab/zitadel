@@ -58,7 +58,7 @@ describe("ZITADEL_API_AWAITINITIALCONN", () => {
           ZITADEL_API_AWAITINITIALCONN: "60s",
         })
         .withStartupTimeout(120_000)
-        .withWaitStrategy(Wait.forHttp("/ui/v2/login/healthy", 3000))
+        .withWaitStrategy(Wait.forHttp("/healthy", 3000))
         .start();
 
       appUrl = `http://${container.getHost()}:${container.getMappedPort(3000)}`;
@@ -71,7 +71,7 @@ describe("ZITADEL_API_AWAITINITIALCONN", () => {
     }, DOCKER_TIMEOUT);
 
     it("starts successfully after the API becomes ready", async () => {
-      const response = await fetch(`${appUrl}/ui/v2/login/healthy`);
+      const response = await fetch(`${appUrl}/healthy`);
       expect(response.status).toBe(200);
     });
   });
@@ -156,7 +156,7 @@ describe("ZITADEL_API_AWAITINITIALCONN", () => {
           ZITADEL_SERVICE_USER_TOKEN: "test-token",
         })
         .withStartupTimeout(120_000)
-        .withWaitStrategy(Wait.forHttp("/ui/v2/login/healthy", 3000))
+        .withWaitStrategy(Wait.forHttp("/healthy", 3000))
         .start();
 
       appUrl = `http://${container.getHost()}:${container.getMappedPort(3000)}`;
@@ -169,7 +169,7 @@ describe("ZITADEL_API_AWAITINITIALCONN", () => {
     }, DOCKER_TIMEOUT);
 
     it("starts without waiting", async () => {
-      const response = await fetch(`${appUrl}/ui/v2/login/healthy`);
+      const response = await fetch(`${appUrl}/healthy`);
       expect(response.status).toBe(200);
     });
   });

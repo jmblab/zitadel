@@ -6,6 +6,7 @@ import { createCallback, getLoginSettings, ServiceConfig } from "@/lib/zitadel";
 import { Code, create } from "@zitadel/client";
 import { CreateCallbackRequestSchema, SessionSchema } from "@zitadel/proto/zitadel/oidc/v2/oidc_service_pb";
 import { Session } from "@zitadel/proto/zitadel/session/v2/session_pb";
+import { getOrgFallbackRedirect } from "./org-redirects";
 import { isSessionValid } from "./session";
 
 type LoginWithOIDCAndSession = {
@@ -81,6 +82,13 @@ export async function loginWithOIDCAndSession({
             serviceConfig,
             organization: selectedSession.factors?.user?.organizationId,
           });
+
+          const orgRedirect = getOrgFallbackRedirect(
+            selectedSession.factors?.user?.organizationId,
+            selectedSession.factors?.user?.loginName,
+            loginSettings?.defaultRedirectUri,
+          );
+          if (orgRedirect) return { redirect: orgRedirect };
 
           if (loginSettings?.defaultRedirectUri && isSafeRedirectUri(loginSettings.defaultRedirectUri)) {
             return { redirect: loginSettings.defaultRedirectUri };

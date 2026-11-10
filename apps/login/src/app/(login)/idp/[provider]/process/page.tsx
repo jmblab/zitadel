@@ -1,8 +1,8 @@
 import { DynamicTheme } from "@/components/dynamic-theme";
 import { IdpProcessHandler } from "@/components/idp-process-handler";
+import { getEffectiveOrganizationId } from "@/lib/organization";
 import { getServiceConfig } from "@/lib/service-url";
-import { getBrandingSettings, getDefaultOrg } from "@/lib/zitadel";
-import { Organization } from "@zitadel/proto/zitadel/org/v2/org_pb";
+import { getBrandingSettings } from "@/lib/zitadel";
 import { headers } from "next/headers";
 
 /**
@@ -28,13 +28,7 @@ export default async function ProcessPage(props: {
   const _headers = await headers();
   const { serviceConfig } = getServiceConfig(_headers);
 
-  let defaultOrganization;
-  if (!organization) {
-    const org: Organization | null = await getDefaultOrg({ serviceConfig });
-    if (org) {
-      defaultOrganization = org.id;
-    }
-  }
+  const defaultOrganization = await getEffectiveOrganizationId({ serviceConfig, organization });
 
   const branding = await getBrandingSettings({ serviceConfig, organization: organization ?? defaultOrganization });
 

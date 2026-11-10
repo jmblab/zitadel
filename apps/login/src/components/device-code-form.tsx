@@ -35,23 +35,22 @@ export function DeviceCodeForm({ userCode }: { userCode?: string }) {
   async function submitCodeAndContinue(value: Inputs): Promise<boolean | void> {
     setLoading(true);
 
-    const response = await getDeviceAuthorizationRequest(value.userCode)
-      .catch(() => {
-        setError("Could not continue the request");
-        return;
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    const response = await getDeviceAuthorizationRequest(value.userCode).catch(() => {
+      setError("Could not continue the request");
+      setLoading(false);
+      return;
+    });
 
     if (!response || !response.deviceAuthorizationRequest?.id) {
       setError("Could not continue the request");
+      setLoading(false);
       return;
     }
 
     // the server picks /accounts (live session in this browser) or /loginname; consent follows on /device/consent
     if (!response.nextUrl) {
       setError("Could not continue the request");
+      setLoading(false);
       return;
     }
 

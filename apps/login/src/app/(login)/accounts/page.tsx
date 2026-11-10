@@ -2,11 +2,11 @@ import { DynamicTheme } from "@/components/dynamic-theme";
 import { SessionsList } from "@/components/sessions-list";
 import { Translated } from "@/components/translated";
 import { getAllSessions } from "@/lib/cookies";
+import { getEffectiveOrganizationId } from "@/lib/organization";
 import { getServiceConfig } from "@/lib/service-url";
-import { getBrandingSettings, getDefaultOrg, listSessions, ServiceConfig } from "@/lib/zitadel";
+import { getBrandingSettings, listSessions, ServiceConfig } from "@/lib/zitadel";
 import { UserPlusIcon } from "@heroicons/react/24/outline";
 import { create } from "@zitadel/client";
-import { Organization } from "@zitadel/proto/zitadel/org/v2/org_pb";
 import { Session, SessionSchema } from "@zitadel/proto/zitadel/session/v2/session_pb";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
@@ -78,17 +78,11 @@ export default async function Page(props: { searchParams: Promise<Record<string 
   const _headers = await headers();
   const { serviceConfig } = getServiceConfig(_headers);
 
-  let defaultOrganization;
-  if (!organization) {
-    const org: Organization | null = await getDefaultOrg({ serviceConfig });
-    if (org) {
-      defaultOrganization = org.id;
-    }
-  }
+  const effectiveOrganization = await getEffectiveOrganizationId({ serviceConfig, organization });
 
   let sessions = await loadSessions({ serviceConfig, organization });
 
-  const branding = await getBrandingSettings({ serviceConfig, organization: organization ?? defaultOrganization });
+  const branding = await getBrandingSettings({ serviceConfig, organization: effectiveOrganization });
 
   const params = new URLSearchParams();
 

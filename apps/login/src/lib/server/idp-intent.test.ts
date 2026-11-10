@@ -1034,6 +1034,21 @@ describe("processIDPCallback", () => {
       });
     });
 
+    test("uses the configured default organization when discovery finds no organization", async () => {
+      vi.stubEnv("DEFAULT_ORGANIZATION_ID", "configured-org");
+      try {
+        mockCreateUser.mockResolvedValue({ id: "newuser123" });
+        await processIDPCallback({ ...defaultParams, organization: undefined });
+        expect(mockCreateUser).toHaveBeenCalledWith({
+          serviceConfig: { baseUrl: "https://api.example.com" },
+          request: expect.objectContaining({ organizationId: "configured-org" }),
+        });
+        expect(mockGetDefaultOrg).not.toHaveBeenCalled();
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    });
+
     test("should return error when no organization context can be determined", async () => {
       mockGetDefaultOrg.mockResolvedValue(null);
 

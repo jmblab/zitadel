@@ -87,16 +87,13 @@ export function ChangePasswordForm({ passwordComplexitySettings, sessionId, logi
         password: { password: values.password },
       }),
       requestId,
-    })
-      .catch(() => {
-        setError(t("change.errors.couldNotVerifyPassword"));
-        return;
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    }).catch(() => {
+      setError(t("change.errors.couldNotVerifyPassword"));
+      setLoading(false);
+      return;
+    });
 
-    handleServerActionResponse(passwordResponse as any, router, setSamlData, setError);
+    handleServerActionResponse(passwordResponse as any, router, setSamlData, setError, setLoading);
 
     return;
   }

@@ -143,8 +143,7 @@ export function SetPasswordForm({
       return;
     });
 
-    setLoading(false);
-    handleServerActionResponse(passwordResponse as any, router, setSamlData, setError);
+    handleServerActionResponse(passwordResponse as any, router, setSamlData, setError, setLoading);
 
     return;
   }

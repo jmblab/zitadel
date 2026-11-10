@@ -30,6 +30,19 @@ describe("LoginOTP", () => {
 
   afterEach(cleanup);
 
+  test.each([undefined, {}])("unlocks when OTP verification returns no session: %j", async (response) => {
+    mockUpdateOrCreateSession.mockResolvedValue(response);
+    render(<LoginOTP host={null} method="time-based" />);
+    fireEvent.change(screen.getByTestId("code-text-input"), { target: { value: "123456" } });
+    const button = screen.getByTestId("submit-button");
+    await waitFor(() => expect(button).not.toBeDisabled());
+    fireEvent.click(button);
+    await waitFor(() => expect(mockUpdateOrCreateSession).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(button).not.toBeDisabled());
+    const { completeFlowOrGetUrl } = await import("@/lib/client");
+    expect(completeFlowOrGetUrl).not.toHaveBeenCalled();
+  });
+
   test("should autofocus the code input on mount", () => {
     const { getByTestId } = render(<LoginOTP host={null} method="time-based" />);
     expect(getByTestId("code-text-input")).toHaveFocus();

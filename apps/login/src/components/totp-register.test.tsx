@@ -1,33 +1,44 @@
-import { cleanup, render } from "@testing-library/react";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { completeFlowOrGetUrl } from "@/lib/client";
+import { verifyTOTP } from "@/lib/server/verify";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { TotpRegister } from "./totp-register";
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
-}));
+const { router } = vi.hoisted(() => ({ router: { push: vi.fn() } }));
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
+vi.mock("next-intl", () => ({ useTranslations: () => (key: string) => key }));
+vi.mock("@/lib/server/verify", () => ({ verifyTOTP: vi.fn() }));
+vi.mock("@/lib/client", () => ({ completeFlowOrGetUrl: vi.fn() }));
+beforeEach(() => vi.clearAllMocks());
+afterEach(cleanup);
 
-vi.mock("next-intl", () => ({
-  useTranslations: () => (key: string) => key,
-}));
+test("should autofocus the code input on mount", () => {
+  const { getByTestId } = render(<TotpRegister uri="otpauth://totp/test" secret="SECRET" />);
+  expect(getByTestId("code-text-input")).toHaveFocus();
+});
 
-vi.mock("@/lib/server/verify", () => ({
-  verifyTOTP: vi.fn(),
-}));
+async function submit(checkAfter: boolean) {
+  render(<TotpRegister uri="otpauth://totp/test?secret=AAA" secret="AAA" loginName="user" checkAfter={checkAfter} />);
+  fireEvent.change(screen.getByTestId("code-text-input"), { target: { value: "123456" } });
+  const button = screen.getByTestId("submit-button");
+  await waitFor(() => expect(button).not.toBeDisabled());
+  fireEvent.click(button);
+  return button;
+}
 
-vi.mock("@/lib/client", () => ({
-  handleServerActionResponse: vi.fn(),
-  completeFlowOrGetUrl: vi.fn(),
-}));
+test.each([true, false])("does not continue when upstream rejects MFA enrollment (checkAfter=%s)", async (checkAfter) => {
+  vi.mocked(verifyTOTP).mockResolvedValue({ error: "Authentication required before enrollment" });
+  const button = await submit(checkAfter);
+  await waitFor(() => expect(screen.getByText("Authentication required before enrollment")).toBeInTheDocument());
+  expect(button).not.toBeDisabled();
+  expect(router.push).not.toHaveBeenCalled();
+  expect(completeFlowOrGetUrl).not.toHaveBeenCalled();
+});
 
-vi.mock("qrcode.react", () => ({
-  QRCodeSVG: ({ value }: { value: string }) => <svg data-testid="qr-code" data-value={value} />,
-}));
-
-describe("TotpRegister", () => {
-  afterEach(cleanup);
-
-  test("should autofocus the code input on mount", () => {
-    const { getByTestId } = render(<TotpRegister uri="otpauth://totp/test" secret="SECRET" />);
-    expect(getByTestId("code-text-input")).toHaveFocus();
-  });
+test("keeps the form blocked while navigating after successful enrollment", async () => {
+  vi.mocked(verifyTOTP).mockResolvedValue({} as any);
+  vi.mocked(completeFlowOrGetUrl).mockResolvedValue({ redirect: "/signedin" });
+  const button = await submit(false);
+  await waitFor(() => expect(router.push).toHaveBeenCalledWith("/signedin"));
+  expect(button).toBeDisabled();
 });

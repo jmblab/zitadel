@@ -70,11 +70,11 @@ export function SetRegisterPasswordForm({
         password: values.password,
       });
 
-      handleServerActionResponse(response, router, setSamlData, setError);
+      handleServerActionResponse(response, router, setSamlData, setError, setLoading);
     } catch {
       setError(t("errors.couldNotRegisterUser"));
-    } finally {
       setLoading(false);
+      return;
     }
   }
 

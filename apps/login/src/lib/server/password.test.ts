@@ -504,6 +504,70 @@ describe("sendPassword", () => {
     });
   });
 
+  test("should return invalid password error without recreating session when existing session verification fails", async () => {
+    mockGetSessionCookieByLoginName.mockResolvedValue({
+      id: "session123",
+      token: "token123",
+      organization: "org123",
+    });
+    mockGetLoginSettings.mockResolvedValue({
+      ignoreUnknownUsernames: false,
+      allowLocalAuthentication: true,
+      passwordCheckLifetime: { seconds: BigInt(60 * 60 * 24), nanos: 0 },
+    });
+    mockSetSessionAndUpdateCookie.mockRejectedValue({ failedAttempts: 3 });
+    mockGetLockoutSettings.mockResolvedValue({ maxPasswordAttempts: BigInt(5) });
+
+    const result = await sendPassword({
+      loginName: "user@example.com",
+      organization: "org123",
+      checks: { password: { password: "wrong" } } as any,
+    });
+
+    expect(result).toEqual({ error: "errors.failedToAuthenticate" });
+    expect(mockCreateSessionAndUpdateCookie).not.toHaveBeenCalled();
+    expect(mockSearchUsers).not.toHaveBeenCalled();
+  });
+
+  test("should return no-limit invalid password error without recreating session when no password limit is configured", async () => {
+    mockGetSessionCookieByLoginName.mockResolvedValue({
+      id: "session123",
+      token: "token123",
+      organization: "org123",
+    });
+    mockGetLoginSettings.mockResolvedValue({
+      ignoreUnknownUsernames: false,
+      allowLocalAuthentication: true,
+      passwordCheckLifetime: { seconds: BigInt(60 * 60 * 24), nanos: 0 },
+    });
+    mockSetSessionAndUpdateCookie.mockRejectedValue({ failedAttempts: 3 });
+    mockGetLockoutSettings.mockResolvedValue({ maxPasswordAttempts: BigInt(0) });
+
+    const result = await sendPassword({
+      loginName: "user@example.com",
+      organization: "org123",
+      checks: { password: { password: "wrong" } } as any,
+    });
+
+    expect(result).toEqual({ error: "errors.failedToAuthenticateNoLimit" });
+    expect(mockCreateSessionAndUpdateCookie).not.toHaveBeenCalled();
+    expect(mockSearchUsers).not.toHaveBeenCalled();
+  });
+
+  test("does not expose attempt counts for an existing session when enumeration protection is enabled", async () => {
+    mockGetSessionCookieByLoginName.mockResolvedValue({ id: "session123", token: "token123", organization: "org123" });
+    mockGetLoginSettings.mockResolvedValue({
+      ignoreUnknownUsernames: true,
+      allowLocalAuthentication: true,
+      passwordCheckLifetime: { seconds: BigInt(3600), nanos: 0 },
+    });
+    mockSetSessionAndUpdateCookie.mockRejectedValue({ failedAttempts: 3 });
+    const result = await sendPassword({ loginName: "user@example.com", organization: "org123", checks: {} as any });
+    expect(result).toEqual({ error: "errors.failedToAuthenticateNoLimit" });
+    expect(mockGetLockoutSettings).not.toHaveBeenCalled();
+    expect(mockCreateSessionAndUpdateCookie).not.toHaveBeenCalled();
+  });
+
   test("should recreate session when session verification fails with keys/session terminated error and ignoreUnknownUsernames is true", async () => {
     mockGetSessionCookieByLoginName.mockResolvedValue({
       id: "session123",

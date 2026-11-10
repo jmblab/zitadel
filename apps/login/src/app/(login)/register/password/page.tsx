@@ -1,15 +1,14 @@
 import { DynamicTheme } from "@/components/dynamic-theme";
 import { SetRegisterPasswordForm } from "@/components/set-register-password-form";
 import { Translated } from "@/components/translated";
+import { getEffectiveOrganizationId } from "@/lib/organization";
 import { getServiceConfig } from "@/lib/service-url";
 import {
   getBrandingSettings,
-  getDefaultOrg,
   getLegalAndSupportSettings,
   getLoginSettings,
   getPasswordComplexitySettings,
 } from "@/lib/zitadel";
-import { Organization } from "@zitadel/proto/zitadel/org/v2/org_pb";
 import { headers } from "next/headers";
 
 export default async function Page(props: { searchParams: Promise<Record<string | number | symbol, string | undefined>> }) {
@@ -20,12 +19,7 @@ export default async function Page(props: { searchParams: Promise<Record<string 
   const _headers = await headers();
   const { serviceConfig } = getServiceConfig(_headers);
 
-  if (!organization) {
-    const org: Organization | null = await getDefaultOrg({ serviceConfig });
-    if (org) {
-      organization = org.id;
-    }
-  }
+  organization = await getEffectiveOrganizationId({ serviceConfig, organization });
 
   const missingData = !firstname || !lastname || !email || !organization;
 

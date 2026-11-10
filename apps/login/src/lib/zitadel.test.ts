@@ -1,5 +1,5 @@
 import { TextQueryMethod } from "@zitadel/proto/zitadel/object/v2/object_pb";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { startIdentityProviderFlow } from "./zitadel";
 
 vi.mock("./service", () => ({
@@ -13,6 +13,37 @@ vi.mock("next-intl/server", () => ({
 vi.mock("./fingerprint", () => ({
   getUserAgent: vi.fn(),
 }));
+
+describe("configured default branding", () => {
+  afterEach(() => vi.unstubAllEnvs());
+  test.each([undefined, "session-org"])("uses the fallback only without explicit context: %s", async (organization) => {
+    vi.stubEnv("DEFAULT_ORGANIZATION_ID", "configured-org");
+    const { createServiceForHost } = await import("./service");
+    const { getBrandingSettings } = await import("./zitadel");
+    const getBranding = vi.fn().mockResolvedValue({ settings: {} });
+    vi.mocked(createServiceForHost).mockResolvedValue({ getBrandingSettings: getBranding } as any);
+    await getBrandingSettings({
+      serviceConfig: { baseUrl: "https://api.example.com", instanceHost: `branding-${organization}` },
+      organization,
+    });
+    expect(getBranding).toHaveBeenCalledWith(
+      { ctx: expect.objectContaining({ resourceOwner: { case: "orgId", value: organization ?? "configured-org" } }) },
+      {},
+    );
+  });
+  test("preserves instance branding when no default is configured", async () => {
+    vi.stubEnv("DEFAULT_ORGANIZATION_ID", "");
+    const { createServiceForHost } = await import("./service");
+    const { getBrandingSettings } = await import("./zitadel");
+    const getBranding = vi.fn().mockResolvedValue({ settings: {} });
+    vi.mocked(createServiceForHost).mockResolvedValue({ getBrandingSettings: getBranding } as any);
+    await getBrandingSettings({ serviceConfig: { baseUrl: "https://api.example.com", instanceHost: "branding-instance" } });
+    expect(getBranding).toHaveBeenCalledWith(
+      { ctx: expect.objectContaining({ resourceOwner: { case: "instance", value: true } }) },
+      {},
+    );
+  });
+});
 
 describe("zitadel queries are case insensitive", () => {
   const serviceConfig = { serviceUrl: "https://api.example.com" } as any;

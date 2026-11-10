@@ -56,7 +56,7 @@ describe("Login Container TLS Support", () => {
     beforeAll(async () => {
       container = await loginImage
         .withExposedPorts(3000)
-        .withWaitStrategy(Wait.forHttp("/ui/v2/login/healthy", 3000))
+        .withWaitStrategy(Wait.forHttp("/healthy", 3000))
         .start();
 
       appUrl = `http://${container.getHost()}:${container.getMappedPort(3000)}`;
@@ -67,7 +67,7 @@ describe("Login Container TLS Support", () => {
     });
 
     it("returns 200 from healthy endpoint", async () => {
-      const response = await fetch(`${appUrl}/ui/v2/login/healthy`);
+      const response = await fetch(`${appUrl}/healthy`);
       expect(response.status).toBe(200);
     });
   });
@@ -107,7 +107,7 @@ describe("Login Container TLS Support", () => {
     it("returns 200 from healthy endpoint over HTTPS", async () => {
       const response = await new Promise<https.IncomingMessage>((resolve, reject) => {
         https
-          .get(`${appUrl}/ui/v2/login/healthy`, { rejectUnauthorized: false }, (res) => {
+          .get(`${appUrl}/healthy`, { rejectUnauthorized: false }, (res) => {
             res.resume();
             resolve(res);
           })

@@ -1,4 +1,5 @@
 FROM node:24-alpine
+ARG NEXT_PUBLIC_BASE_PATH=""
 WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
@@ -9,6 +10,7 @@ COPY --chown=nextjs:nodejs .next/standalone ./
 
 USER nextjs
 ENV HOSTNAME="::" \
+    NEXT_PUBLIC_BASE_PATH="${NEXT_PUBLIC_BASE_PATH}" \
     PORT="3000" \
     NODE_ENV="production" \
     NODE_OPTIONS="--use-openssl-ca --require /app/load-ssl-cert-dir.cjs" \
@@ -18,5 +20,5 @@ ENV HOSTNAME="::" \
     OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD ["/usr/local/bin/node", "/app/healthcheck.mjs", "/ui/v2/login/ready"]
+    CMD ["/usr/local/bin/node", "/app/healthcheck.mjs"]
 ENTRYPOINT ["/app/entrypoint.sh", "node", "apps/login/server.js"]

@@ -160,17 +160,15 @@ export function LoginOTP({ host, loginName, sessionId, requestId, organization, 
       organization,
       checks,
       requestId,
-    })
-      .catch(() => {
-        setError(t("errors.couldNotVerifyCode"));
-        return;
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    }).catch(() => {
+      setError(t("errors.couldNotVerifyCode"));
+      setLoading(false);
+      return;
+    });
 
     if (response && "error" in response && response.error) {
       setError(response.error);
+      setLoading(false);
       return;
     }
 
@@ -178,35 +176,41 @@ export function LoginOTP({ host, loginName, sessionId, requestId, organization, 
   }
 
   function setCodeAndContinue(values: Inputs) {
-    return submitCode(values, organization).then(async (response) => {
-      if (response && "sessionId" in response) {
-        setLoading(true);
-        // Wait for 2 seconds to avoid eventual consistency issues with an OTP code being verified in the /login endpoint
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+    return submitCode(values, organization)
+      .then(async (response) => {
+        if (response && "sessionId" in response && response.sessionId) {
+          setLoading(true);
+          // Wait for 2 seconds to avoid eventual consistency issues with an OTP code being verified in the /login endpoint
+          await new Promise((resolve) => setTimeout(resolve, 2000));
 
-        // Use unified approach that handles both OIDC/SAML and regular flows
-        if (response.factors?.user) {
-          const callbackResponse = await completeFlowOrGetUrl(
-            requestId && response.sessionId
-              ? {
-                  sessionId: response.sessionId,
-                  requestId: requestId,
-                  organization: response.factors?.user?.organizationId,
-                }
-              : {
-                  loginName: response.factors.user.loginName,
-                  organization: response.factors?.user?.organizationId,
-                },
-            loginSettings?.defaultRedirectUri,
-          );
-          setLoading(false);
-
-          handleServerActionResponse(callbackResponse, router, setSamlData, setError);
+          // Use unified approach that handles both OIDC/SAML and regular flows
+          if (response.factors?.user) {
+            const callbackResponse = await completeFlowOrGetUrl(
+              requestId && response.sessionId
+                ? {
+                    sessionId: response.sessionId,
+                    requestId: requestId,
+                    organization: response.factors?.user?.organizationId,
+                  }
+                : {
+                    loginName: response.factors.user.loginName,
+                    organization: response.factors?.user?.organizationId,
+                  },
+              loginSettings?.defaultRedirectUri,
+            );
+            handleServerActionResponse(callbackResponse, router, setSamlData, setError, setLoading);
+          } else {
+            setError(t("errors.couldNotVerifyCode"));
+            setLoading(false);
+          }
         } else {
           setLoading(false);
         }
-      }
-    });
+      })
+      .catch(() => {
+        setError(t("errors.couldNotVerifyCode"));
+        setLoading(false);
+      });
   }
 
   return (

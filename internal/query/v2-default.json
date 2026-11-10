@@ -62,6 +62,8 @@
       }
     },
     "password": {
+      "showPassword": "Passwort anzeigen",
+      "hidePassword": "Passwort ausblenden",
       "verify": {
         "title": "Passwort",
         "description": "Geben Sie Ihr Passwort ein.",
@@ -536,6 +538,8 @@
       }
     },
     "password": {
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
       "verify": {
         "title": "Password",
         "description": "Enter your password.",
@@ -1010,6 +1014,8 @@
       }
     },
     "password": {
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña",
       "verify": {
         "title": "Contraseña",
         "description": "Introduce tu contraseña.",
@@ -1484,6 +1490,8 @@
       }
     },
     "password": {
+      "showPassword": "Mostra password",
+      "hidePassword": "Nascondi password",
       "verify": {
         "title": "Password",
         "description": "Inserisci la tua password.",
@@ -1958,6 +1966,8 @@
       }
     },
     "password": {
+      "showPassword": "Wachtwoord tonen",
+      "hidePassword": "Wachtwoord verbergen",
       "verify": {
         "title": "Wachtwoord",
         "description": "Voer jouw wachtwoord in.",
@@ -2376,7 +2386,7 @@
     },
     "accounts": {
       "title": "Konta",
-      "description": "Wybierz konto, którego chcesz użyć.",
+      "description": "Wybierz konto, które chcesz użyć.",
       "addAnother": "Dodaj kolejne konto",
       "noResults": "Nie znaleziono kont",
       "verified": "zweryfikowany",
@@ -2432,6 +2442,8 @@
       }
     },
     "password": {
+      "showPassword": "Pokaż hasło",
+      "hidePassword": "Ukryj hasło",
       "verify": {
         "title": "Hasło",
         "description": "Wprowadź swoje hasło.",
@@ -2501,7 +2513,7 @@
         "hasNumber": "Musi zawierać numer.",
         "hasUppercase": "Musi zawierać dużą literę.",
         "hasLowercase": "Musi zawierać małą literę.",
-        "equals": "Potwierdzenie hasła pasuje.",
+        "equals": "Hasła są takie same.",
         "matches": "Pasuje",
         "doesNotMatch": "Nie pasuje"
       },
@@ -2510,8 +2522,8 @@
         "couldNotSendResetLink": "Nie można wysłać linku do resetowania hasła",
         "couldNotCreateSessionForUser": "Nie można utworzyć sesji dla użytkownika",
         "couldNotVerifyPassword": "Nie można zweryfikować hasła",
-        "failedToAuthenticate": "Uwierzytelnianie nie powiodło się. Wykorzystałeś {failedAttempts} z {maxPasswordAttempts} prób wprowadzenia hasła.{lockoutMessage}",
-        "failedToAuthenticateNoLimit": "Uwierzytelnianie nie powiodło się.",
+        "failedToAuthenticate": "Zalogowanie nie powiodło się. Wykorzystałeś {failedAttempts} z {maxPasswordAttempts} prób wprowadzenia hasła.{lockoutMessage}",
+        "failedToAuthenticateNoLimit": "Zalogowanie nie powiodło się.",
         "accountLockedContactAdmin": " Skontaktuj się z administratorem, aby odblokować konto",
         "userNotFound": "Użytkownik nie został znaleziony w systemie",
         "initialUserNotSupported": "Użytkownik początkowy nie jest obsługiwany",
@@ -2599,7 +2611,7 @@
       },
       "set": {
         "title": "Skonfiguruj uwierzytelnianie dwuskładnikowe",
-        "description": "Wybierz jedną z poniższych metod drugiego czynnika.",
+        "description": "Wybierz jedną z dostępnych metod weryfikacji.",
         "skip": "Pomiń"
       }
     },
@@ -2778,7 +2790,7 @@
       "errors": {
         "couldNotResendEmail": "Nie udało się ponownie wysłać wiadomości e-mail",
         "couldNotVerifyUser": "Nie udało się zweryfikować użytkownika",
-        "couldNotVerifyInvite": "Nie udało się zweryfikować zaproszenia",
+        "couldNotVerifyInvite": "Nie udało się zweryfikować konta",
         "couldNotVerifyEmail": "Nie udało się zweryfikować adresu e-mail",
         "couldNotVerify": "Nie udało się zweryfikować",
         "couldNotLoadUser": "Nie udało się załadować użytkownika",
@@ -2906,6 +2918,8 @@
       }
     },
     "password": {
+      "showPassword": "Показать пароль",
+      "hidePassword": "Скрыть пароль",
       "verify": {
         "title": "Пароль",
         "description": "Введите ваш пароль.",
@@ -3380,6 +3394,8 @@
       }
     },
     "password": {
+      "showPassword": "显示密码",
+      "hidePassword": "隐藏密码",
       "verify": {
         "title": "密码",
         "description": "请输入您的密码。",
@@ -3854,6 +3870,8 @@
       }
     },
     "password": {
+      "showPassword": "Parolayı göster",
+      "hidePassword": "Parolayı gizle",
       "verify": {
         "title": "Şifre",
         "description": "Şifrenizi girin.",
@@ -4328,6 +4346,8 @@
       }
     },
     "password": {
+      "showPassword": "Показати пароль",
+      "hidePassword": "Приховати пароль",
       "verify": {
         "title": "Пароль",
         "description": "Введіть свій пароль.",
@@ -4802,6 +4822,8 @@
       }
     },
     "password": {
+      "showPassword": "إظهار كلمة المرور",
+      "hidePassword": "إخفاء كلمة المرور",
       "verify": {
         "title": "كلمة المرور",
         "description": "أدخل كلمة المرور الخاصة بك.",
@@ -5276,6 +5298,8 @@
       }
     },
     "password": {
+      "showPassword": "Jelszó megjelenítése",
+      "hidePassword": "Jelszó elrejtése",
       "verify": {
         "title": "Jelszó",
         "description": "Add meg a jelszavadat.",
@@ -5750,6 +5774,8 @@
       }
     },
     "password": {
+      "showPassword": "Afficher le mot de passe",
+      "hidePassword": "Masquer le mot de passe",
       "verify": {
         "title": "Mot de passe",
         "description": "Entrez votre mot de passe.",
@@ -6224,6 +6250,8 @@
       }
     },
     "password": {
+      "showPassword": "パスワードを表示",
+      "hidePassword": "パスワードを非表示",
       "verify": {
         "title": "パスワード",
         "description": "パスワードを入力してください。",
@@ -6698,6 +6726,8 @@
       }
     },
     "password": {
+      "showPassword": "Mostrar senha",
+      "hidePassword": "Ocultar senha",
       "verify": {
         "title": "Senha",
         "description": "Insira sua senha.",

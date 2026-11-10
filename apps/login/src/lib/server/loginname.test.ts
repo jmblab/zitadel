@@ -129,6 +129,14 @@ describe("sendLoginname", () => {
   });
 
   describe("Error cases", () => {
+    test("trims login names before searching without mutating the caller's command", async () => {
+      mockGetLoginSettings.mockResolvedValue({ allowLocalAuthentication: true });
+      mockSearchUsers.mockResolvedValue({ error: "Search failed" });
+      const command = { loginName: "  user@example.com \t" };
+      await sendLoginname(command);
+      expect(mockSearchUsers).toHaveBeenCalledWith(expect.objectContaining({ searchValue: "user@example.com" }));
+      expect(command.loginName).toBe("  user@example.com \t");
+    });
     test("should return error when login settings cannot be retrieved", async () => {
       mockGetLoginSettings.mockResolvedValue(null);
 

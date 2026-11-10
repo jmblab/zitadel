@@ -76,12 +76,11 @@ export function RegisterForm({
         requestId: requestId,
       });
 
-      handleServerActionResponse(response, router, setSamlData, setError);
+      handleServerActionResponse(response, router, setSamlData, setError, setLoading);
 
       return response;
     } catch {
       setError(t("errors.couldNotRegisterUser"));
-    } finally {
       setLoading(false);
     }
   }

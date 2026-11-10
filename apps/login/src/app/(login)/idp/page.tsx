@@ -1,6 +1,7 @@
 import { DynamicTheme } from "@/components/dynamic-theme";
 import { SignInWithIdp } from "@/components/sign-in-with-idp";
 import { Translated } from "@/components/translated";
+import { getEffectiveOrganizationId } from "@/lib/organization";
 import { getServiceConfig } from "@/lib/service-url";
 import { getActiveIdentityProviders, getBrandingSettings } from "@/lib/zitadel";
 import { Metadata } from "next";
@@ -21,11 +22,14 @@ export default async function Page(props: { searchParams: Promise<Record<string 
   const _headers = await headers();
   const { serviceConfig } = getServiceConfig(_headers);
 
-  const identityProviders = await getActiveIdentityProviders({ serviceConfig, orgId: organization }).then((resp) => {
-    return resp.identityProviders;
-  });
+  const effectiveOrganization = await getEffectiveOrganizationId({ serviceConfig, organization });
+  const identityProviders = await getActiveIdentityProviders({ serviceConfig, orgId: effectiveOrganization }).then(
+    (resp) => {
+      return resp.identityProviders;
+    },
+  );
 
-  const branding = await getBrandingSettings({ serviceConfig, organization });
+  const branding = await getBrandingSettings({ serviceConfig, organization: effectiveOrganization });
 
   return (
     <DynamicTheme branding={branding}>

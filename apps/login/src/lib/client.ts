@@ -118,14 +118,18 @@ export async function getNextUrl(
 /**
  * Resolves the redirect URI based on the following priority:
  * 1. DEFAULT_REDIRECT_URI environment variable
+ * 1.5. JMB org-specific redirects from env
  * 2. defaultRedirectUri from organization settings
  * 3. Relative signed-in page fallback
  * 4. Reserved for future extensions
  */
-export async function resolveRedirectUri(command: FinishFlowCommand, defaultRedirectUri?: string): Promise<string> {
+export async function resolveRedirectUri(
+  command: FinishFlowCommand & { organization?: string },
+  defaultRedirectUri?: string,
+): Promise<string> {
   // 1. Environment variable override
   const envOverride = process.env.DEFAULT_REDIRECT_URI;
-  if (envOverride) {
+  if (envOverride && isSafeRedirectUri(envOverride)) {
     if (envOverride.startsWith("/")) {
       // Special state: trigger absolute host-based redirect with provided path
       try {
@@ -141,6 +145,27 @@ export async function resolveRedirectUri(command: FinishFlowCommand, defaultRedi
       console.log("resolveRedirectUri: Using DEFAULT_REDIRECT_URI override:", envOverride);
       return envOverride;
     }
+  }
+
+  // 1.5 JMB org-specific redirects from env
+  try {
+    const { getOrgRedirectConfig, getPrimaryOrgRedirectUrl } = await import("./org-redirects");
+    const orgConfig = getOrgRedirectConfig(command.organization);
+
+    if (orgConfig) {
+      const hasDefault = Boolean(defaultRedirectUri);
+      const mayUseOrgConfig = orgConfig.overrideDefault || !hasDefault;
+
+      if (mayUseOrgConfig && orgConfig.autoRedirect) {
+        const target = getPrimaryOrgRedirectUrl(orgConfig);
+        if (target) return target;
+      }
+
+      // fall through to signed-in page to render links
+      if (mayUseOrgConfig) return goToSignedInPage(command);
+    }
+  } catch {
+    // ignore
   }
 
   // 2. Default redirect URI from settings

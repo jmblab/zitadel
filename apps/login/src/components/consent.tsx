@@ -27,20 +27,28 @@ export function ConsentScreen({
   const [error, setError] = useState<string>("");
   const router = useRouter();
 
-  async function run(action: () => Promise<unknown>, onSuccess: (response: { redirect?: string }) => void) {
+  async function run(action: () => Promise<unknown>, fallback?: string) {
+    if (loading) return;
     setLoading(true);
-    const response = (await action()
-      .catch(() => ({ error: "Could not complete the request" }))
-      .finally(() => {
+    setError("");
+    try {
+      const response = (await action()) as { error?: string; redirect?: string } | undefined;
+      if (response?.error) {
+        setError(response.error);
         setLoading(false);
-      })) as { error?: string; redirect?: string };
-
-    if (response?.error) {
-      setError(response.error);
-      return;
+        return;
+      }
+      const target = response?.redirect ?? (response ? fallback : undefined);
+      if (!target) {
+        setError("Could not complete the request");
+        setLoading(false);
+        return;
+      }
+      router.push(target);
+    } catch {
+      setError("Could not complete the request");
+      setLoading(false);
     }
-
-    onSuccess(response);
   }
 
   const scopes = scope?.filter((s) => !!s);
@@ -91,13 +99,9 @@ export function ConsentScreen({
 
       <div className="mt-4 flex w-full flex-row items-center">
         <Button
-          onClick={() =>
-            run(
-              () => denyDeviceAuthorization({ userCode, sessionId, organization }),
-              (response) => router.push(response.redirect ?? "/device"),
-            )
-          }
+          onClick={() => run(() => denyDeviceAuthorization({ userCode, sessionId, organization }), "/device")}
           variant={ButtonVariants.Secondary}
+          disabled={loading}
           data-testid="deny-button"
         >
           {loading && <Spinner className="mr-2 h-5 w-5" />}
@@ -106,12 +110,7 @@ export function ConsentScreen({
         <span className="flex-grow"></span>
 
         <Button
-          onClick={() =>
-            run(
-              () => approveDeviceAuthorization({ userCode, sessionId, organization }),
-              (response) => response.redirect && router.push(response.redirect),
-            )
-          }
+          onClick={() => run(() => approveDeviceAuthorization({ userCode, sessionId, organization }))}
           disabled={loading}
           data-testid="submit-button"
           className="self-end"

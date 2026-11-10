@@ -42,6 +42,7 @@ export type SendLoginnameCommand = {
 const ORG_SUFFIX_REGEX = /(?<=@)(.+)/;
 
 export async function sendLoginname(command: SendLoginnameCommand) {
+  command = { ...command, loginName: command.loginName.trim() };
   const _headers = await headers();
   const { serviceConfig } = getServiceConfig(_headers);
 

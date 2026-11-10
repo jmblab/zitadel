@@ -159,7 +159,7 @@ describe("OpenTelemetry Integration", () => {
         DEBUG: "true",
       })
       .withStartupTimeout(120000)
-      .withWaitStrategy(Wait.forHttp("/ui/v2/login/healthy", 3000))
+      .withWaitStrategy(Wait.forHttp("/healthy", 3000))
       .start();
 
     appUrl = `http://${loginApp.getHost()}:${loginApp.getMappedPort(3000)}`;
@@ -168,11 +168,11 @@ describe("OpenTelemetry Integration", () => {
     console.log(`[PORTS] APP_URL: ${appUrl}`);
     console.log(`[PORTS] PROMETHEUS_URL: ${prometheusUrl}`);
 
-    await fetch(`${appUrl}/ui/v2/login/otel-test`);
-    await fetch(`${appUrl}/ui/v2/login/loginname`, { redirect: "manual" });
-    await fetch(`${appUrl}/ui/v2/login/healthy`);
-    await fetch(`${appUrl}/ui/v2/login/ready`);
-    await fetch(`${appUrl}/ui/v2/login/this-does-not-exist-404`);
+    await fetch(`${appUrl}/otel-test`);
+    await fetch(`${appUrl}/loginname`, { redirect: "manual" });
+    await fetch(`${appUrl}/healthy`);
+    await fetch(`${appUrl}/ready`);
+    await fetch(`${appUrl}/this-does-not-exist-404`);
 
     await new Promise((r) => setTimeout(r, 3000));
 
@@ -1300,7 +1300,7 @@ describe("OpenTelemetry Disabled", () => {
         OTEL_SDK_DISABLED: "true",
       })
       .withStartupTimeout(120000)
-      .withWaitStrategy(Wait.forHttp("/ui/v2/login/healthy", 3000))
+      .withWaitStrategy(Wait.forHttp("/healthy", 3000))
       .start();
 
     appUrl = `http://${loginApp.getHost()}:${loginApp.getMappedPort(3000)}`;
@@ -1317,7 +1317,7 @@ describe("OpenTelemetry Disabled", () => {
     it(
       "starts successfully with OTEL_SDK_DISABLED=true",
       async () => {
-        const response = await fetch(`${appUrl}/ui/v2/login/healthy`);
+        const response = await fetch(`${appUrl}/healthy`);
         expect(response.ok).toBe(true);
       },
       TEST_TIMEOUT,
@@ -1326,7 +1326,7 @@ describe("OpenTelemetry Disabled", () => {
     it(
       "responds to health checks",
       async () => {
-        const response = await fetch(`${appUrl}/ui/v2/login/healthy`);
+        const response = await fetch(`${appUrl}/healthy`);
         expect(response.status).toBe(200);
       },
       TEST_TIMEOUT,
@@ -1353,7 +1353,7 @@ describe("OpenTelemetry Disabled", () => {
     it(
       "outputs logs to console via Winston",
       async () => {
-        await fetch(`${appUrl}/ui/v2/login/healthy`);
+        await fetch(`${appUrl}/healthy`);
         await new Promise((resolve) => setTimeout(resolve, 1000));
         const logOutput = await getContainerLogs(loginApp);
         expect(logOutput.length).toBeGreaterThan(0);
@@ -1406,14 +1406,14 @@ describe("Log Level Configuration", () => {
             LOG_LEVEL: "debug",
           })
           .withStartupTimeout(120000)
-          .withWaitStrategy(Wait.forHttp("/ui/v2/login/healthy", 3000))
+          .withWaitStrategy(Wait.forHttp("/healthy", 3000))
           .start();
 
         appUrl = `http://${loginApp.getHost()}:${loginApp.getMappedPort(3000)}`;
         console.log(`[OTEL_DISABLED + LOG_LEVEL=debug] APP_URL: ${appUrl}`);
 
-        await fetch(`${appUrl}/ui/v2/login/healthy`);
-        await fetch(`${appUrl}/ui/v2/login/otel-test`);
+        await fetch(`${appUrl}/healthy`);
+        await fetch(`${appUrl}/otel-test`);
         await new Promise((r) => setTimeout(r, 1000));
       }, DOCKER_TIMEOUT);
 
@@ -1426,7 +1426,7 @@ describe("Log Level Configuration", () => {
       it(
         "starts successfully",
         async () => {
-          const response = await fetch(`${appUrl}/ui/v2/login/healthy`);
+          const response = await fetch(`${appUrl}/healthy`);
           expect(response.ok).toBe(true);
         },
         TEST_TIMEOUT,
@@ -1473,13 +1473,13 @@ describe("Log Level Configuration", () => {
             LOG_LEVEL: "warn",
           })
           .withStartupTimeout(120000)
-          .withWaitStrategy(Wait.forHttp("/ui/v2/login/healthy", 3000))
+          .withWaitStrategy(Wait.forHttp("/healthy", 3000))
           .start();
 
         appUrl = `http://${loginApp.getHost()}:${loginApp.getMappedPort(3000)}`;
         console.log(`[OTEL_DISABLED + LOG_LEVEL=warn] APP_URL: ${appUrl}`);
 
-        await fetch(`${appUrl}/ui/v2/login/healthy`);
+        await fetch(`${appUrl}/healthy`);
         await new Promise((r) => setTimeout(r, 1000));
       }, DOCKER_TIMEOUT);
 
@@ -1492,7 +1492,7 @@ describe("Log Level Configuration", () => {
       it(
         "starts successfully",
         async () => {
-          const response = await fetch(`${appUrl}/ui/v2/login/healthy`);
+          const response = await fetch(`${appUrl}/healthy`);
           expect(response.ok).toBe(true);
         },
         TEST_TIMEOUT,
@@ -1578,14 +1578,14 @@ describe("Log Level Configuration", () => {
             OTEL_BSP_SCHEDULE_DELAY: "1000",
           })
           .withStartupTimeout(120000)
-          .withWaitStrategy(Wait.forHttp("/ui/v2/login/healthy", 3000))
+          .withWaitStrategy(Wait.forHttp("/healthy", 3000))
           .start();
 
         appUrl = `http://${loginApp.getHost()}:${loginApp.getMappedPort(3000)}`;
         console.log(`[OTEL_ENABLED + LOG_LEVEL=debug] APP_URL: ${appUrl}`);
 
-        await fetch(`${appUrl}/ui/v2/login/healthy`);
-        await fetch(`${appUrl}/ui/v2/login/otel-test`);
+        await fetch(`${appUrl}/healthy`);
+        await fetch(`${appUrl}/otel-test`);
         await new Promise((r) => setTimeout(r, 3000));
 
         await waitForFile(path.join(logOutputDir, "logs.json"), 30, 1000);
@@ -1601,7 +1601,7 @@ describe("Log Level Configuration", () => {
       it(
         "starts successfully",
         async () => {
-          const response = await fetch(`${appUrl}/ui/v2/login/healthy`);
+          const response = await fetch(`${appUrl}/healthy`);
           expect(response.ok).toBe(true);
         },
         TEST_TIMEOUT,
@@ -1692,14 +1692,14 @@ describe("Log Level Configuration", () => {
             OTEL_BSP_SCHEDULE_DELAY: "1000",
           })
           .withStartupTimeout(120000)
-          .withWaitStrategy(Wait.forHttp("/ui/v2/login/healthy", 3000))
+          .withWaitStrategy(Wait.forHttp("/healthy", 3000))
           .start();
 
         appUrl = `http://${loginApp.getHost()}:${loginApp.getMappedPort(3000)}`;
         console.log(`[OTEL_ENABLED + LOG_LEVEL=warn] APP_URL: ${appUrl}`);
 
-        await fetch(`${appUrl}/ui/v2/login/healthy`);
-        await fetch(`${appUrl}/ui/v2/login/otel-test`);
+        await fetch(`${appUrl}/healthy`);
+        await fetch(`${appUrl}/otel-test`);
         await new Promise((r) => setTimeout(r, 3000));
       }, DOCKER_TIMEOUT);
 
@@ -1713,7 +1713,7 @@ describe("Log Level Configuration", () => {
       it(
         "starts successfully",
         async () => {
-          const response = await fetch(`${appUrl}/ui/v2/login/healthy`);
+          const response = await fetch(`${appUrl}/healthy`);
           expect(response.ok).toBe(true);
         },
         TEST_TIMEOUT,

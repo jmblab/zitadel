@@ -3,10 +3,10 @@ import { DynamicTheme } from "@/components/dynamic-theme";
 import { Translated } from "@/components/translated";
 import { UserAvatar } from "@/components/user-avatar";
 import { checkDeviceCodeCheckCookie } from "@/lib/device-code-check";
+import { getEffectiveOrganizationId } from "@/lib/organization";
 import { getServiceConfig } from "@/lib/service-url";
 import { loadMostRecentSession, loadSessionById } from "@/lib/session";
-import { getBrandingSettings, getDefaultOrg, getDeviceAuthorizationRequest } from "@/lib/zitadel";
-import { Organization } from "@zitadel/proto/zitadel/org/v2/org_pb";
+import { getBrandingSettings, getDeviceAuthorizationRequest } from "@/lib/zitadel";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -61,15 +61,9 @@ export default async function Page(props: { searchParams: Promise<Record<string 
     return redirect(`/loginname?` + loginParams);
   }
 
-  let defaultOrganization;
-  if (!organization) {
-    const org: Organization | null = await getDefaultOrg({ serviceConfig });
-    if (org) {
-      defaultOrganization = org.id;
-    }
-  }
+  const effectiveOrganization = await getEffectiveOrganizationId({ serviceConfig, organization });
 
-  const branding = await getBrandingSettings({ serviceConfig, organization: organization ?? defaultOrganization });
+  const branding = await getBrandingSettings({ serviceConfig, organization: effectiveOrganization });
 
   return (
     <DynamicTheme branding={branding}>
