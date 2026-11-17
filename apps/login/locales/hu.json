@@ -99,6 +99,7 @@
       },
       "errors": {
         "couldNotSetPassword": "Nem sikerült beállítani a jelszót",
+        "invalidCode": "A kód érvénytelen vagy lejárt. Ellenőrizze a megadott kódot, vagy kattintson a(z) \"{resend}\" gombra új kód kéréséhez.",
         "couldNotResetPassword": "Nem sikerült visszaállítani a jelszót",
         "couldNotVerifyPassword": "Nem sikerült ellenőrizni a jelszót"
       }

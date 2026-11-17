@@ -470,7 +470,9 @@ export async function changePassword(command: { code?: string; userId: string; p
   if (!user || user.userId !== command.userId) {
     const loginSettings = await getLoginSettings({ serviceConfig, organization: command.organization });
     if (loginSettings?.ignoreUnknownUsernames) {
-      return { error: t("set.errors.couldNotSetPassword") };
+      return {
+        error: command.code ? t("set.errors.invalidCode", { resend: t("set.resend") }) : t("set.errors.couldNotSetPassword"),
+      };
     }
     return { error: t("errors.couldNotSendResetLink") };
   }
@@ -499,7 +501,21 @@ export async function changePassword(command: { code?: string; userId: string; p
     }
   }
 
-  return setUserPassword({ serviceConfig, userId, password: command.password, code: command.code });
+  try {
+    return await setUserPassword({ serviceConfig, userId, password: command.password, code: command.code });
+  } catch (error) {
+    // Keep invalid, expired and absent/consumed codes indistinguishable. Match stable
+    // backend IDs rather than translated messages; other failures are not code errors.
+    if (
+      command.code &&
+      isClassifiedError(error) &&
+      (error.code === Code.InvalidArgument || error.code === Code.FailedPrecondition) &&
+      /\((CODE-woT0xc|CODE-QvUQ4P|COMMAND-2M9fs)\)\s*$/.test(error.rawMessage)
+    ) {
+      return { error: t("set.errors.invalidCode", { resend: t("set.resend") }) };
+    }
+    return { error: t("set.errors.couldNotSetPassword") };
+  }
 }
 
 type CheckSessionAndSetPasswordCommand = {

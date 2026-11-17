@@ -92,6 +92,7 @@
       },
       "errors": {
         "couldNotSetPassword": "パスワードを設定できませんでした",
+        "invalidCode": "コードが正しくないか、有効期限が切れています。入力したコードを確認するか、「{resend}」をクリックして新しいコードを受け取ってください。",
         "couldNotResetPassword": "パスワードをリセットできませんでした",
         "couldNotVerifyPassword": "パスワードを確認できませんでした"
       }

@@ -99,6 +99,7 @@
       },
       "errors": {
         "couldNotSetPassword": "Impossible de définir le mot de passe",
+        "invalidCode": "Le code est incorrect ou a expiré. Vérifiez le code saisi ou cliquez sur \"{resend}\" pour en recevoir un nouveau.",
         "couldNotResetPassword": "Impossible de réinitialiser le mot de passe",
         "couldNotVerifyPassword": "Impossible de vérifier le mot de passe"
       }

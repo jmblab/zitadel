@@ -99,6 +99,7 @@
       },
       "errors": {
         "couldNotSetPassword": "Impossibile impostare la password",
+        "invalidCode": "Il codice non è valido o è scaduto. Controlla il codice inserito oppure fai clic su \"{resend}\" per riceverne uno nuovo.",
         "couldNotResetPassword": "Impossibile reimpostare la password",
         "couldNotVerifyPassword": "Impossibile verificare la password"
       }

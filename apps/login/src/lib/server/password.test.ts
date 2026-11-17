@@ -1,4 +1,5 @@
 import { Code, ConnectError } from "@connectrpc/connect";
+import { UserState } from "@zitadel/proto/zitadel/user/v2/user_pb";
 import { AuthenticationMethodType } from "@zitadel/proto/zitadel/user/v2/user_service_pb";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ClassifiedConnectError } from "../grpc/interceptors/error-classification";
@@ -11,7 +12,7 @@ vi.mock("next/headers", () => ({
 
 vi.mock("@zitadel/client", () => ({
   create: vi.fn(),
-  Code: { FailedPrecondition: 9 },
+  Code: { FailedPrecondition: 9, InvalidArgument: 3 },
   ConnectError: class extends Error {
     code: number;
     constructor(msg: string, code: number) {
@@ -699,6 +700,62 @@ describe("changePassword", () => {
 
     mockHeaders.mockResolvedValue({ get: vi.fn(() => "example.com") });
     mockGetServiceConfig.mockReturnValue({ serviceConfig: { baseUrl: "https://api.example.com" } });
+  });
+
+  test.each([
+    [Code.InvalidArgument, "CODE-woT0xc"],
+    [Code.FailedPrecondition, "CODE-QvUQ4P"],
+    [Code.FailedPrecondition, "COMMAND-2M9fs"],
+  ])("uses the same translated message for code error %s / %s", async (status, id) => {
+    mockGetUserByID.mockResolvedValue({ user: { userId: "user-1", state: UserState.ACTIVE } });
+    mockSetUserPassword.mockRejectedValue(new ClassifiedConnectError(new ConnectError(`Backend message (${id})`, status)));
+
+    await expect(changePassword({ userId: "user-1", password: "newpassword", code: "wrong-code" })).resolves.toEqual({
+      error: "set.errors.invalidCode",
+    });
+  });
+
+  test("does not label unrelated failures as invalid codes or expose technical details", async () => {
+    mockGetUserByID.mockResolvedValue({ user: { userId: "user-1", state: UserState.ACTIVE } });
+    mockSetUserPassword.mockRejectedValue(
+      new ClassifiedConnectError(new ConnectError("Backend failure (OTHER-id)", Code.FailedPrecondition)),
+    );
+
+    await expect(changePassword({ userId: "user-1", password: "newpassword", code: "code" })).resolves.toEqual({
+      error: "set.errors.couldNotSetPassword",
+    });
+  });
+
+  test("does not claim a code error for password setup without a code", async () => {
+    mockGetUserByID.mockResolvedValue({ user: { userId: "user-1", state: UserState.ACTIVE } });
+    const { listAuthenticationMethodTypes } = await import("../zitadel");
+    const { checkUserVerification } = await import("../verify-helper");
+    vi.mocked(listAuthenticationMethodTypes).mockResolvedValue({ authMethodTypes: [] } as any);
+    vi.mocked(checkUserVerification).mockResolvedValue(true);
+    mockSetUserPassword.mockRejectedValue(
+      new ClassifiedConnectError(new ConnectError("Backend message (COMMAND-2M9fs)", Code.FailedPrecondition)),
+    );
+
+    await expect(changePassword({ userId: "user-1", password: "newpassword" })).resolves.toEqual({
+      error: "set.errors.couldNotSetPassword",
+    });
+  });
+
+  test("uses the same code message for unknown users when enumeration protection is enabled", async () => {
+    mockGetUserByID.mockResolvedValue({});
+    mockGetLoginSettings.mockResolvedValue({ ignoreUnknownUsernames: true });
+
+    await expect(changePassword({ userId: "unknown", password: "newpassword", code: "code" })).resolves.toEqual({
+      error: "set.errors.invalidCode",
+    });
+    expect(mockSetUserPassword).not.toHaveBeenCalled();
+  });
+
+  test("preserves a successful password change", async () => {
+    mockGetUserByID.mockResolvedValue({ user: { userId: "user-1", state: UserState.ACTIVE } });
+    const response = { details: {} };
+    mockSetUserPassword.mockResolvedValue(response);
+    await expect(changePassword({ userId: "user-1", password: "newpassword", code: "valid-code" })).resolves.toBe(response);
   });
 
   test("should return generic error when user not found and ignoreUnknownUsernames is true", async () => {

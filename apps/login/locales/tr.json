@@ -99,6 +99,7 @@
       },
       "errors": {
         "couldNotSetPassword": "Şifre belirlenemedi",
+        "invalidCode": "Kod geçersiz veya süresi dolmuş. Girdiğiniz kodu kontrol edin veya yeni bir kod almak için \"{resend}\" düğmesine tıklayın.",
         "couldNotResetPassword": "Şifre sıfırlanamadı",
         "couldNotVerifyPassword": "Şifre doğrulanamadı"
       }

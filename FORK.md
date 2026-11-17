@@ -76,3 +76,9 @@ preferably pinned to its recorded digest.
 After updating to another upstream version, use its tag as the prefix, for
 example `v4.20.3-jmblab.1`. The workflow checks that this upstream tag is an
 ancestor of the selected commit; it does not automatically update the branch.
+
+## Login UI password reset errors
+
+Invalid, expired, and missing password reset codes share a translated message
+that points to the resend-code button. Login UI does not display raw RPC errors
+or internal error IDs for password changes.
