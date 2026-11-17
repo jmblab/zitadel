@@ -112,7 +112,10 @@ stable `ZITADEL_SESSION_COOKIE_SECRET` across restarts and replicas.
 
 ### Included behavior
 
-
+- Login UI uses Next.js and its ESLint plugin at `16.4.5`, including the
+  [November security fixes](https://github.com/vercel/next.js/releases/tag/v16.4.5).
+  Upstream ZITADEL `v4.20.3` pins `16.4.3`; this runtime patch is maintained in
+  the fork alongside the application changes.
 - Invalid, expired, and missing password reset codes share a translated message
   that points to the resend-code button. Login UI does not display raw RPC errors
   or internal error IDs for password changes.
