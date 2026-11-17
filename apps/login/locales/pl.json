@@ -101,6 +101,7 @@
       },
       "errors": {
         "couldNotSetPassword": "Nie można ustawić hasła",
+        "invalidCode": "Kod jest nieprawidłowy lub stracił ważność. Sprawdź wpisany kod lub kliknij \"{resend}\", aby otrzymać nowy.",
         "couldNotResetPassword": "Nie można zresetować hasła",
         "couldNotVerifyPassword": "Nie można zweryfikować hasła"
       }

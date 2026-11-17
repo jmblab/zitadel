@@ -101,6 +101,7 @@
       },
       "errors": {
         "couldNotSetPassword": "Passwort konnte nicht gesetzt werden",
+        "invalidCode": "Der Code ist ungültig oder abgelaufen. Prüfen Sie den eingegebenen Code oder klicken Sie auf \"{resend}\", um einen neuen zu erhalten.",
         "couldNotResetPassword": "Passwort konnte nicht zurückgesetzt werden",
         "couldNotVerifyPassword": "Passwort konnte nicht verifiziert werden"
       }

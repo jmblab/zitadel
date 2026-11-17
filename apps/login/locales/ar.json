@@ -101,6 +101,7 @@
       },
       "errors": {
         "couldNotSetPassword": "تعذر تعيين كلمة المرور",
+        "invalidCode": "الرمز غير صحيح أو انتهت صلاحيته. تحقق من الرمز الذي أدخلته أو انقر على \"{resend}\" للحصول على رمز جديد.",
         "couldNotResetPassword": "تعذر إعادة تعيين كلمة المرور",
         "couldNotVerifyPassword": "تعذر التحقق من كلمة المرور"
       }

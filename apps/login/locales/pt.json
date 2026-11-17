@@ -101,6 +101,7 @@
       },
       "errors": {
         "couldNotSetPassword": "Não foi possível definir a senha",
+        "invalidCode": "O código é inválido ou expirou. Verifique o código inserido ou clique em \"{resend}\" para receber um novo.",
         "couldNotResetPassword": "Não foi possível redefinir a senha",
         "couldNotVerifyPassword": "Não foi possível verificar a senha"
       }

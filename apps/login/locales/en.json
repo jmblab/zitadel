@@ -101,6 +101,7 @@
       },
       "errors": {
         "couldNotSetPassword": "Could not set password",
+        "invalidCode": "The code is invalid or has expired. Check the code you entered or click \"{resend}\" to receive a new one.",
         "couldNotResetPassword": "Could not reset password",
         "couldNotVerifyPassword": "Could not verify password"
       }

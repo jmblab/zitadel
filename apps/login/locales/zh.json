@@ -101,6 +101,7 @@
       },
       "errors": {
         "couldNotSetPassword": "无法设置密码",
+        "invalidCode": "验证码不正确或已过期。请检查输入的验证码，或点击“{resend}”获取新的验证码。",
         "couldNotResetPassword": "无法重置密码",
         "couldNotVerifyPassword": "无法验证密码"
       }

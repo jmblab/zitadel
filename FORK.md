@@ -82,6 +82,9 @@ ancestor of the selected commit; it does not automatically update the branch.
 
 Included behavior:
 
+- Invalid, expired, and missing password reset codes share a translated message
+  that points to the resend-code button. Login UI does not display raw RPC errors
+  or internal error IDs for password changes.
 - Password visibility toggle with translated, accessible labels
   ([#11951](https://github.com/zitadel/zitadel/issues/11951),
   [#11952](https://github.com/zitadel/zitadel/pull/11952)).

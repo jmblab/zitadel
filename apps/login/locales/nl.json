@@ -101,6 +101,7 @@
       },
       "errors": {
         "couldNotSetPassword": "Kon wachtwoord niet instellen",
+        "invalidCode": "De code is ongeldig of verlopen. Controleer de ingevoerde code of klik op \"{resend}\" om een nieuwe te ontvangen.",
         "couldNotResetPassword": "Kon wachtwoord niet resetten",
         "couldNotVerifyPassword": "Kon wachtwoord niet verifiëren"
       }

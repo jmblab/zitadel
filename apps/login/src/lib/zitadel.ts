@@ -36,9 +36,9 @@ import { getTranslations } from "next-intl/server";
 import { getUserAgent } from "./fingerprint";
 
 import { applyCustomHeaders } from "@/lib/custom-headers";
-import { errorClassificationInterceptor, isClassifiedError } from "@/lib/grpc/interceptors/error-classification";
+import { errorClassificationInterceptor } from "@/lib/grpc/interceptors/error-classification";
 import { otelGrpcInterceptor } from "@/lib/grpc/interceptors/otel";
-import { Code, Interceptor } from "@connectrpc/connect";
+import { Interceptor } from "@connectrpc/connect";
 import { PromiseCache } from "./cache";
 import { createServiceForHost } from "./service";
 
@@ -1222,14 +1222,7 @@ export async function setUserPassword({
 
   const userService: Client<typeof UserService> = await createServiceForHost(UserService, serviceConfig);
 
-  return userService.setPassword(payload, {}).catch((error) => {
-    // throw error if failed precondition (ex. User is not yet initialized)
-    if (isClassifiedError(error) && error.code === Code.FailedPrecondition && error.message) {
-      return { error: error.message };
-    } else {
-      throw error;
-    }
-  });
+  return userService.setPassword(payload, {});
 }
 
 export async function setPassword({
