@@ -2,9 +2,10 @@ import { Alert, AlertType } from "@/components/alert";
 import { Button } from "@/components/button";
 import { DynamicTheme } from "@/components/dynamic-theme";
 import { Translated } from "@/components/translated";
-import { getEffectiveOrganizationId } from "@/lib/organization";
-import { getServiceConfig } from "@/lib/service-url";
-import { getBrandingSettings } from "@/lib/zitadel";
+import { isAllowedPostErrorRedirectUrl } from "@/lib/client-utils";
+import { getEffectiveOrganizationId } from "@/lib/server/organization";
+import { getServiceConfig } from "@/lib/server/service-url";
+import { getBrandingSettings } from "@/lib/server/zitadel";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
@@ -42,7 +43,7 @@ export default async function Page(props: { searchParams: Promise<Record<string 
           </Alert>
         </div>
 
-        {postErrorRedirectUrl && (
+        {isAllowedPostErrorRedirectUrl(postErrorRedirectUrl) && (
           <Link href={postErrorRedirectUrl}>
             <Button className="bg-primary-light-500 hover:bg-primary-light-400 dark:bg-primary-dark-500 dark:hover:bg-primary-dark-400 w-full rounded-md px-4 py-3 text-center transition-all">
               <Translated i18nKey="accountNotFound.backToLogin" namespace="idp" />

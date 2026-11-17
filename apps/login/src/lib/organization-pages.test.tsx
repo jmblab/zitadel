@@ -1,3 +1,5 @@
+import { loadMostRecentSession } from "@/lib/server/session";
+import { getBrandingSettings, getDefaultOrg, getLoginSettings } from "@/lib/server/zitadel";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import AccountNotFoundPage from "../app/(login)/idp/[provider]/account-not-found/page";
 import ProcessPage from "../app/(login)/idp/[provider]/process/page";
@@ -6,13 +8,13 @@ import IdentityProvidersPage from "../app/(login)/idp/page";
 import PasskeyPage from "../app/(login)/passkey/page";
 import PasswordPage from "../app/(login)/password/page";
 import PasswordSetPage from "../app/(login)/password/set/page";
-import { loadMostRecentSession } from "./session";
-import { getBrandingSettings, getDefaultOrg, getLoginSettings } from "./zitadel";
 
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => ({})) }));
-vi.mock("./service-url", () => ({ getServiceConfig: () => ({ serviceConfig: { baseUrl: "https://api.example.com" } }) }));
-vi.mock("./session", () => ({ loadMostRecentSession: vi.fn() }));
-vi.mock("./zitadel", () => ({
+vi.mock("@/lib/server/service-url", () => ({
+  getServiceConfig: () => ({ serviceConfig: { baseUrl: "https://api.example.com" } }),
+}));
+vi.mock("@/lib/server/session", () => ({ loadMostRecentSession: vi.fn() }));
+vi.mock("@/lib/server/zitadel", () => ({
   getBrandingSettings: vi.fn(),
   getActiveIdentityProviders: vi.fn(async () => ({ identityProviders: [] })),
   getDefaultOrg: vi.fn(),

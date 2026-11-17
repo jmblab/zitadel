@@ -1,4 +1,4 @@
-import { resendVerification } from "@/lib/server/verify";
+import { resendVerification } from "@/lib/actions/verify";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -14,7 +14,7 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
 
-vi.mock("@/lib/server/verify", () => ({
+vi.mock("@/lib/actions/verify", () => ({
   sendVerification: vi.fn(),
   resendVerification: vi.fn(),
 }));
@@ -25,7 +25,7 @@ describe("VerifyForm", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    const { sendVerification } = await import("@/lib/server/verify");
+    const { sendVerification } = await import("@/lib/actions/verify");
     mockSendVerification = vi.mocked(sendVerification);
     mockSendVerification.mockResolvedValue({ redirect: "/success" });
   });

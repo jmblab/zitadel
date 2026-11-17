@@ -1,4 +1,4 @@
-import { sendLoginname } from "@/lib/server/loginname";
+import { sendLoginname } from "@/lib/actions/loginname";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { StrictMode } from "react";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -12,7 +12,7 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
 
-vi.mock("@/lib/server/loginname", () => ({
+vi.mock("@/lib/actions/loginname", () => ({
   sendLoginname: vi.fn(),
 }));
 

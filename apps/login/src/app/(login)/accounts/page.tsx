@@ -1,10 +1,10 @@
 import { DynamicTheme } from "@/components/dynamic-theme";
 import { SessionsList } from "@/components/sessions-list";
 import { Translated } from "@/components/translated";
-import { getAllSessions } from "@/lib/cookies";
-import { getEffectiveOrganizationId } from "@/lib/organization";
-import { getServiceConfig } from "@/lib/service-url";
-import { getBrandingSettings, listSessions, ServiceConfig } from "@/lib/zitadel";
+import { getAllSessions } from "@/lib/server/cookies";
+import { getEffectiveOrganizationId } from "@/lib/server/organization";
+import { getServiceConfig } from "@/lib/server/service-url";
+import { getBrandingSettings, listSessions, ServiceConfig } from "@/lib/server/zitadel";
 import { UserPlusIcon } from "@heroicons/react/24/outline";
 import { create } from "@zitadel/client";
 import { Session, SessionSchema } from "@zitadel/proto/zitadel/session/v2/session_pb";

@@ -1,9 +1,9 @@
 import { DynamicTheme } from "@/components/dynamic-theme";
 import { LDAPUsernamePasswordForm } from "@/components/ldap-username-password-form";
 import { Translated } from "@/components/translated";
-import { getEffectiveOrganizationId } from "@/lib/organization";
-import { getServiceConfig } from "@/lib/service-url";
-import { getBrandingSettings } from "@/lib/zitadel";
+import { getEffectiveOrganizationId } from "@/lib/server/organization";
+import { getServiceConfig } from "@/lib/server/service-url";
+import { getBrandingSettings } from "@/lib/server/zitadel";
 import { headers } from "next/headers";
 
 export default async function Page(props: {
@@ -11,7 +11,7 @@ export default async function Page(props: {
   params: Promise<{ provider: string }>;
 }) {
   const searchParams = await props.searchParams;
-  const { idpId, organization, link, requestId, postErrorRedirectUrl, linkToSessionId, linkFingerprint } = searchParams;
+  const { idpId, organization, link, requestId, postErrorRedirectUrl, linkToSessionId } = searchParams;
 
   if (!idpId) {
     throw new Error("No idpId provided in searchParams");
@@ -44,7 +44,6 @@ export default async function Page(props: {
           organization={organization}
           postErrorRedirectUrl={postErrorRedirectUrl}
           linkToSessionId={linkToSessionId}
-          linkFingerprint={linkFingerprint}
         />
       </div>
     </DynamicTheme>

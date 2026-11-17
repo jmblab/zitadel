@@ -1,29 +1,29 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import Page from "./page";
 
-vi.mock("@/lib/zitadel", () => ({
+vi.mock("@/lib/server/zitadel", () => ({
   getBrandingSettings: vi.fn(),
   getLoginSettings: vi.fn(),
   getDefaultOrg: vi.fn(),
   authorizeOrDenyDeviceAuthorization: vi.fn(),
 }));
 
-vi.mock("@/lib/server/device", () => ({
+vi.mock("@/lib/actions/device", () => ({
   approveDeviceAuthorization: vi.fn(),
   denyDeviceAuthorization: vi.fn(),
   completeDeviceAuthorization: vi.fn(),
 }));
 
-vi.mock("@/lib/session", () => ({
+vi.mock("@/lib/server/session", () => ({
   loadMostRecentSession: vi.fn(),
   loadSessionById: vi.fn(),
 }));
 
-vi.mock("@/lib/client", () => ({
+vi.mock("@/lib/server/next-url", () => ({
   resolveRedirectUri: vi.fn(),
 }));
 
-vi.mock("@/lib/service-url", () => ({
+vi.mock("@/lib/server/service-url", () => ({
   getServiceConfig: vi.fn(() => ({ serviceConfig: { baseUrl: "https://example.com" } })),
 }));
 
@@ -51,10 +51,10 @@ describe("signedin page", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    const zitadel = await import("@/lib/zitadel");
-    const device = await import("@/lib/server/device");
-    const sessionLib = await import("@/lib/session");
-    const client = await import("@/lib/client");
+    const zitadel = await import("@/lib/server/zitadel");
+    const device = await import("@/lib/actions/device");
+    const sessionLib = await import("@/lib/server/session");
+    const client = await import("@/lib/server/next-url");
 
     authorizeOrDenyDeviceAuthorization = vi.mocked(zitadel.authorizeOrDenyDeviceAuthorization);
     completeDeviceAuthorization = vi.mocked((device as any).completeDeviceAuthorization);
@@ -67,8 +67,8 @@ describe("signedin page", () => {
   });
 
   test("respects the session organization's default redirect even when a requestId is present", async () => {
-    const zitadel = await import("@/lib/zitadel");
-    const client = await import("@/lib/client");
+    const zitadel = await import("@/lib/server/zitadel");
+    const client = await import("@/lib/server/next-url");
     vi.mocked(zitadel.getLoginSettings).mockResolvedValue({ defaultRedirectUri: "https://default.example.com" } as any);
     vi.stubEnv(
       "ORG_REDIRECTS",
@@ -91,8 +91,8 @@ describe("signedin page", () => {
   });
 
   test("uses configured organization as the fallback without changing the session search scope", async () => {
-    const zitadel = await import("@/lib/zitadel");
-    const sessionLib = await import("@/lib/session");
+    const zitadel = await import("@/lib/server/zitadel");
+    const sessionLib = await import("@/lib/server/session");
     vi.mocked(sessionLib.loadMostRecentSession).mockResolvedValue(undefined);
     vi.stubEnv("DEFAULT_ORGANIZATION_ID", "configured-org");
     await Page({ searchParams: Promise.resolve({ loginName: "user" }) });

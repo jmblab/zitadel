@@ -1,5 +1,5 @@
-import { completeFlowOrGetUrl } from "@/lib/client";
-import { verifyTOTP } from "@/lib/server/verify";
+import { completeFlowOrGetUrl } from "@/lib/actions/flow";
+import { verifyTOTP } from "@/lib/actions/verify";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { TotpRegister } from "./totp-register";
@@ -7,8 +7,8 @@ import { TotpRegister } from "./totp-register";
 const { router } = vi.hoisted(() => ({ router: { push: vi.fn() } }));
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
 vi.mock("next-intl", () => ({ useTranslations: () => (key: string) => key }));
-vi.mock("@/lib/server/verify", () => ({ verifyTOTP: vi.fn() }));
-vi.mock("@/lib/client", () => ({ completeFlowOrGetUrl: vi.fn() }));
+vi.mock("@/lib/actions/verify", () => ({ verifyTOTP: vi.fn() }));
+vi.mock("@/lib/actions/flow", () => ({ completeFlowOrGetUrl: vi.fn() }));
 beforeEach(() => vi.clearAllMocks());
 afterEach(cleanup);
 

@@ -1,4 +1,4 @@
-import { skipMFAAndContinueWithNextUrl } from "@/lib/server/session";
+import { skipMFAAndContinueWithNextUrl } from "@/lib/actions/session";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { SecondFactorType } from "@zitadel/proto/zitadel/settings/v2/login_settings_pb";
 import { AuthenticationMethodType } from "@zitadel/proto/zitadel/user/v2/user_service_pb";
@@ -8,7 +8,7 @@ import { ChooseSecondFactorToSetup } from "./choose-second-factor-to-setup";
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 vi.mock("next-intl", () => ({ useTranslations: () => (key: string) => key }));
-vi.mock("@/lib/server/session", () => ({ skipMFAAndContinueWithNextUrl: vi.fn() }));
+vi.mock("@/lib/actions/session", () => ({ skipMFAAndContinueWithNextUrl: vi.fn() }));
 const props = {
   userId: "user",
   loginName: "user",
