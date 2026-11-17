@@ -3,15 +3,15 @@ import { DynamicTheme } from "@/components/dynamic-theme";
 import { RegisterForm } from "@/components/register-form";
 import { SignInWithIdp } from "@/components/sign-in-with-idp";
 import { Translated } from "@/components/translated";
-import { getEffectiveOrganizationId } from "@/lib/organization";
-import { getServiceConfig } from "@/lib/service-url";
+import { getEffectiveOrganizationId } from "@/lib/server/organization";
+import { getServiceConfig } from "@/lib/server/service-url";
 import {
   getActiveIdentityProviders,
   getBrandingSettings,
   getLegalAndSupportSettings,
   getLoginSettings,
   getPasswordComplexitySettings,
-} from "@/lib/zitadel";
+} from "@/lib/server/zitadel";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";

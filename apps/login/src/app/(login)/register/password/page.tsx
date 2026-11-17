@@ -1,14 +1,14 @@
 import { DynamicTheme } from "@/components/dynamic-theme";
 import { SetRegisterPasswordForm } from "@/components/set-register-password-form";
 import { Translated } from "@/components/translated";
-import { getEffectiveOrganizationId } from "@/lib/organization";
-import { getServiceConfig } from "@/lib/service-url";
+import { getEffectiveOrganizationId } from "@/lib/server/organization";
+import { getServiceConfig } from "@/lib/server/service-url";
 import {
   getBrandingSettings,
   getLegalAndSupportSettings,
   getLoginSettings,
   getPasswordComplexitySettings,
-} from "@/lib/zitadel";
+} from "@/lib/server/zitadel";
 import { headers } from "next/headers";
 
 export default async function Page(props: { searchParams: Promise<Record<string | number | symbol, string | undefined>> }) {

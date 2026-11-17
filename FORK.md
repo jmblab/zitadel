@@ -2,8 +2,8 @@
 
 ## Base and Login V2 fix
 
-The initial fork build is based on upstream `v4.20.2` (commit
-`dce17d591309b1c0cdfb6c6718ec6cfada05eb7d`, also the `v4.x` tip when prepared).
+The release branch includes upstream `v4.20.3`. The initial fork build was based
+on upstream `v4.20.2` (commit `dce17d591309b1c0cdfb6c6718ec6cfada05eb7d`).
 The query-layer fix for [#10722](https://github.com/zitadel/zitadel/issues/10722)
 follows [#11896](https://github.com/zitadel/zitadel/pull/11896): requiring Login V2
 at instance level preserves an application's custom Login URL. An absent, null,
@@ -45,7 +45,7 @@ included in this workflow.
 
 1. Open **Actions → Fork release → Run workflow**.
 2. Select `v4.x` for the maintained v4 build.
-3. Enter a new version, initially `v4.20.2-jmblab.1`.
+3. Enter a new version, for example `v4.20.3-jmblab.1` for this upstream base.
 4. Run the workflow. It validates the upstream base tag and rejects an existing
    fork tag, runs API checks, builds the embedded console and Linux binaries,
    builds/tests Login UI, and publishes both multi-architecture images.
@@ -55,8 +55,8 @@ included in this workflow.
 Images are:
 
 ```text
-ghcr.io/jmblab/zitadel:v4.20.2-jmblab.1
-ghcr.io/jmblab/zitadel-login:v4.20.2-jmblab.1
+ghcr.io/jmblab/zitadel:v4.20.3-jmblab.1
+ghcr.io/jmblab/zitadel-login:v4.20.3-jmblab.1
 ```
 
 Both support `linux/amd64` and `linux/arm64`. The build does not publish FIPS,
@@ -77,11 +77,45 @@ preferably pinned to its recorded digest.
 After updating to another upstream version, use its tag as the prefix, for
 example `v4.20.3-jmblab.1`. The workflow checks that this upstream tag is an
 ancestor of the selected commit; it does not automatically update the branch.
+Merge upstream integration PRs with a merge commit to preserve that tag ancestry.
 
 ## JMBLab Login UI
 
-Included behavior:
+### Upgrading to v4.20.3
 
+Read the [upstream release notes](https://github.com/zitadel/zitadel/releases/tag/v4.20.3)
+before deployment. This update includes authentication security fixes, not only
+changes to error messages.
+
+- The Login service user must have `IAM_LOGIN_CLIENT` so it can complete OIDC
+  and SAML requests. `IAM_OWNER` alone is insufficient. Check the service user
+  behind the configured Login API credential.
+- `x-zitadel-public-host`, when configured, must contain a single hostname with
+  an optional port, without a URL scheme or path. Malformed values are rejected.
+- Password authentication now enforces the user's organization's local-auth
+  policy on the backend. Users in organizations that disable it must use an IdP.
+- In-progress external IdP sign-ins and outstanding Login V1 authorization codes
+  from before the update may require users to start signing in again.
+- Adding email or SMS MFA now requires an explicit confirmation. The fork keeps
+  that confirmation button disabled until navigation completes and unlocks it
+  when an error allows another attempt.
+- Server Actions live in `src/lib/actions/`; internal helpers live in
+  `src/lib/server/`. Organization defaults and redirects follow this layout.
+  The production build checks the published actions against the upstream
+  allowlist. Fork customizations do not add public actions or relax session,
+  browser-binding, or enrollment checks.
+
+Use matching backend and Login UI releases and test password reset, invitation,
+OIDC/SAML callbacks, IdP sign-in, MFA enrollment, logout, and organization branding
+in a non-production environment before production rollout. Keep the existing
+stable `ZITADEL_SESSION_COOKIE_SECRET` across restarts and replicas.
+
+### Included behavior
+
+- Login UI uses Next.js and its ESLint plugin at `16.4.5`, including the
+  [November security fixes](https://github.com/vercel/next.js/releases/tag/v16.4.5).
+  Upstream ZITADEL `v4.20.3` pins `16.4.3`; this runtime patch is maintained in
+  the fork alongside the application changes.
 - Invalid, expired, and missing password reset codes share a translated message
   that points to the resend-code button. Login UI does not display raw RPC errors
   or internal error IDs for password changes.
@@ -107,6 +141,31 @@ For repeated verification emails ([#10724](https://github.com/zitadel/zitadel/is
 the current upstream verification page already avoids sending mail during rendering.
 Regression tests check that opening and rerendering a verification link verifies
 once without requesting another email.
+
+### Regression coverage for fork customizations
+
+`Fork CI` runs the Login unit/component tests and production build, including the
+Server Action allowlist check, plus API unit tests on Linux. These checks run for
+pull requests and pushes to `v4.x` and `main`. A passing build is not a substitute
+for testing a deployed authentication flow. Keep the tests when resolving future
+upstream merges; update mocks and imports to follow upstream's boundaries.
+
+| Customization | Automated regression coverage | Remaining verification |
+| --- | --- | --- |
+| Per-application Login V2 URL when the instance requires V2 | [OIDC query cases](internal/query/oidc_client_test.go) cover custom, empty, absent and fallback URLs | Real authorization request against a deployed backend |
+| Organization defaults and branding | [Default precedence](apps/login/src/lib/organization.test.ts), [page context](apps/login/src/lib/organization-pages.test.tsx), [branding fallback](apps/login/src/lib/server/zitadel.test.ts), [IdP organization](apps/login/src/lib/actions/idp-intent.test.ts) | Browser checks for each deployed organization's branding and registration |
+| Organization links and redirect precedence | [Configuration and icon CSP](apps/login/src/lib/org-redirects.test.ts), [navigation](apps/login/src/lib/server/next-url.test.ts), [OIDC/SAML](apps/login/src/lib/org-login-flow.test.ts), [signed-in page](apps/login/src/app/(login)/signedin/page.test.tsx) | Real RP callbacks, logout and SAML POST in a browser |
+| Password attempt handling and reset-code errors | [Password action tests](apps/login/src/lib/actions/password.test.ts) cover existing sessions, enumeration protection, invalid/expired/missing reset codes and successful changes | Full reset email journey with backend state and organization policies |
+| Duplicate-submit protection | [Shared response handling](apps/login/src/lib/client-loading.test.ts), plus explicit pending/navigation/error tests for password, username, LDAP, account selection, consent, passkey registration, TOTP and email/SMS MFA forms | Partial coverage: registration forms, password setup/change, U2F registration, session removal and verification continuation still lack dedicated checks for every pending/error/navigation path |
+| Optional MFA and repeated effects | [MFA selection](apps/login/src/components/choose-second-factor-to-setup.test.tsx), [passkey registration](apps/login/src/components/register-passkey.test.tsx), [SAML submission](apps/login/src/components/auto-submit-form.test.tsx) | Real browser/WebAuthn behavior and backend MFA policy combinations |
+| Verification links must not send a replacement email on render | [Verification form](apps/login/src/components/verify-form.test.tsx) checks first render and rerender | Actual delivery, expiry and resend against the email service |
+| Password visibility and translations | [Input accessibility](apps/login/src/components/input.test.tsx), [message merging](apps/login/src/lib/server/merge-messages.test.ts) | No exhaustive test of all fork text values across local languages, embedded backend defaults and organization overrides |
+| Styling, theme/layout and separate-domain image | Theme/component unit tests and the root-path production build | No visual snapshots or automated Azure/container smoke test for the fork configuration |
+
+The highest-value additions are the remaining per-form submission cases, a
+translation consistency check, and browser smoke tests for sign-in, reset,
+verification, MFA and logout on the separate Login domain. Record a regression
+test for each confirmed bug before the next upstream merge.
 
 ### Organization context
 

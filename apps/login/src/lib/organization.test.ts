@@ -1,8 +1,8 @@
+import { getEffectiveOrganizationId } from "@/lib/server/organization";
+import { getDefaultOrg, ServiceConfig } from "@/lib/server/zitadel";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { getEffectiveOrganizationId } from "./organization";
-import { getDefaultOrg, ServiceConfig } from "./zitadel";
 
-vi.mock("./zitadel", () => ({ getDefaultOrg: vi.fn() }));
+vi.mock("@/lib/server/zitadel", () => ({ getDefaultOrg: vi.fn() }));
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.clearAllMocks();

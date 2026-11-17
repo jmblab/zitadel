@@ -1,4 +1,4 @@
-import { resetPassword, sendPassword } from "@/lib/server/password";
+import { resetPassword, sendPassword } from "@/lib/actions/password";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { PasswordForm } from "./password-form";
@@ -13,7 +13,7 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
 
-vi.mock("@/lib/server/password", () => ({
+vi.mock("@/lib/actions/password", () => ({
   sendPassword: vi.fn(),
   resetPassword: vi.fn(),
 }));
@@ -64,7 +64,7 @@ describe("PasswordForm", () => {
   });
 
   test("keeps password reset disabled through its redirect", async () => {
-    let resolve!: (value: {}) => void;
+    let resolve!: (value: Record<string, never>) => void;
     vi.mocked(resetPassword).mockReturnValue(
       new Promise((done) => {
         resolve = done;

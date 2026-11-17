@@ -1,6 +1,11 @@
+import { buildCSP } from "@/lib/server/csp";
+import {
+  getOrgFallbackRedirect,
+  getOrgIconOrigins,
+  getOrgRedirectConfig,
+  getOrgRedirects,
+} from "@/lib/server/org-redirects";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { buildCSP } from "./csp";
-import { getOrgFallbackRedirect, getOrgIconOrigins, getOrgRedirectConfig, getOrgRedirects } from "./org-redirects";
 
 afterEach(() => vi.unstubAllEnvs());
 const links = [{ label: "Portal", url: "https://portal.example.com" }];

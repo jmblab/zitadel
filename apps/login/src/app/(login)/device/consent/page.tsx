@@ -2,11 +2,11 @@ import { ConsentScreen } from "@/components/consent";
 import { DynamicTheme } from "@/components/dynamic-theme";
 import { Translated } from "@/components/translated";
 import { UserAvatar } from "@/components/user-avatar";
-import { checkDeviceCodeCheckCookie } from "@/lib/device-code-check";
-import { getEffectiveOrganizationId } from "@/lib/organization";
-import { getServiceConfig } from "@/lib/service-url";
-import { loadMostRecentSession, loadSessionById } from "@/lib/session";
-import { getBrandingSettings, getDeviceAuthorizationRequest } from "@/lib/zitadel";
+import { checkDeviceCodeCheckCookie } from "@/lib/server/device-code-check";
+import { getEffectiveOrganizationId } from "@/lib/server/organization";
+import { getServiceConfig } from "@/lib/server/service-url";
+import { loadMostRecentSession, loadSessionById } from "@/lib/server/session";
+import { getBrandingSettings, getDeviceAuthorizationRequest } from "@/lib/server/zitadel";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 

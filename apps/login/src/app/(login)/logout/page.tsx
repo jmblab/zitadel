@@ -1,10 +1,10 @@
 import { DynamicTheme } from "@/components/dynamic-theme";
 import { SessionsClearList } from "@/components/sessions-clear-list";
 import { Translated } from "@/components/translated";
-import { getAllSessionCookieIds } from "@/lib/cookies";
-import { getEffectiveOrganizationId } from "@/lib/organization";
-import { getServiceConfig } from "@/lib/service-url";
-import { getBrandingSettings, listSessions, ServiceConfig } from "@/lib/zitadel";
+import { getAllSessionCookieIds } from "@/lib/server/cookies";
+import { getEffectiveOrganizationId } from "@/lib/server/organization";
+import { getServiceConfig } from "@/lib/server/service-url";
+import { getBrandingSettings, listSessions, ServiceConfig } from "@/lib/server/zitadel";
 import { verifyJwt } from "@zitadel/client/node";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";

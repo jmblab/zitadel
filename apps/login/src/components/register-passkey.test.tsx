@@ -1,4 +1,4 @@
-import { registerPasskeyLink, verifyPasskeyRegistration } from "@/lib/server/passkeys";
+import { registerPasskeyLink, verifyPasskeyRegistration } from "@/lib/actions/passkeys";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { StrictMode } from "react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
@@ -7,7 +7,7 @@ import { RegisterPasskey } from "./register-passkey";
 const { router } = vi.hoisted(() => ({ router: { push: vi.fn(), back: vi.fn() } }));
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
 vi.mock("next-intl", () => ({ useTranslations: () => (key: string) => key }));
-vi.mock("@/lib/server/passkeys", () => ({ registerPasskeyLink: vi.fn(), verifyPasskeyRegistration: vi.fn() }));
+vi.mock("@/lib/actions/passkeys", () => ({ registerPasskeyLink: vi.fn(), verifyPasskeyRegistration: vi.fn() }));
 const createCredential = vi.fn();
 
 beforeEach(() => {
