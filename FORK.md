@@ -2,7 +2,7 @@
 
 ## Base and Login V2 fix
 
-The release branch includes upstream `v4.20.3`. The initial fork build was based
+The release branch includes upstream `v4.20.4`. The initial fork build was based
 on upstream `v4.20.2` (commit `dce17d591309b1c0cdfb6c6718ec6cfada05eb7d`).
 The query-layer fix for [#10722](https://github.com/zitadel/zitadel/issues/10722)
 follows [#11896](https://github.com/zitadel/zitadel/pull/11896): requiring Login V2
@@ -45,7 +45,7 @@ included in this workflow.
 
 1. Open **Actions → Fork release → Run workflow**.
 2. Select `v4.x` for the maintained v4 build.
-3. Enter a new version, for example `v4.20.3-jmblab.1` for this upstream base.
+3. Enter a new version, for example `v4.20.4-jmblab.1` for this upstream base.
 4. Run the workflow. It validates the upstream base tag and rejects an existing
    fork tag, runs API checks, builds the embedded console and Linux binaries,
    builds/tests Login UI, and publishes both multi-architecture images.
@@ -55,8 +55,8 @@ included in this workflow.
 Images are:
 
 ```text
-ghcr.io/jmblab/zitadel:v4.20.3-jmblab.1
-ghcr.io/jmblab/zitadel-login:v4.20.3-jmblab.1
+ghcr.io/jmblab/zitadel:v4.20.4-jmblab.1
+ghcr.io/jmblab/zitadel-login:v4.20.4-jmblab.1
 ```
 
 Both support `linux/amd64` and `linux/arm64`. The build does not publish FIPS,
@@ -75,13 +75,34 @@ once a fork tag exists, use a new fork version. Deploy only a completed release,
 preferably pinned to its recorded digest.
 
 After updating to another upstream version, use its tag as the prefix, for
-example `v4.20.3-jmblab.1`. The workflow checks that this upstream tag is an
+example `v4.20.4-jmblab.1`. The workflow checks that this upstream tag is an
 ancestor of the selected commit; it does not automatically update the branch.
 Merge upstream integration PRs with a merge commit to preserve that tag ancestry.
 
 ## JMBLab Login UI
 
-### Upgrading to v4.20.3
+### Upgrading to v4.20.4
+
+[Upstream v4.20.4](https://github.com/zitadel/zitadel/releases/tag/v4.20.4)
+limits password-check history loading to the events needed for the current
+failed-attempt count. It retains account lockout behavior and avoids repeatedly
+loading a user's entire password-check history; the improvement depends on the
+user's history and workload.
+
+It also prevents duplicate OTP challenges and adds an SMS resend countdown,
+enforced per session using the signed session cookie. The default is 30 seconds;
+`OTP_SMS_RESEND_COOLDOWN_SECONDS` overrides it (`0` disables it). Email resend does
+not have this countdown. The fork's submit/navigation locks remain in place.
+
+The release restores support for older Safari/iOS browsers and enables PKCE by
+default for Google, GitHub, GitLab and Azure AD identity providers. Include any
+configured external providers in pre-production sign-in checks.
+
+When importing an upstream version, also push its verified, unmodified upstream
+tag to the fork. A merge preserves commits but does not publish the tag required
+by **Fork release** validation. Keep upstream ancestry by using a merge commit.
+
+### Requirements inherited from v4.20.3
 
 Read the [upstream release notes](https://github.com/zitadel/zitadel/releases/tag/v4.20.3)
 before deployment. This update includes authentication security fixes, not only
@@ -114,7 +135,7 @@ stable `ZITADEL_SESSION_COOKIE_SECRET` across restarts and replicas.
 
 - Login UI uses Next.js and its ESLint plugin at `16.4.5`, including the
   [November security fixes](https://github.com/vercel/next.js/releases/tag/v16.4.5).
-  Upstream ZITADEL `v4.20.3` pins `16.4.3`; this runtime patch is maintained in
+  Upstream ZITADEL `v4.20.4` pins `16.4.3`; this runtime patch is maintained in
   the fork alongside the application changes.
 - Invalid, expired, and missing password reset codes share a translated message
   that points to the resend-code button. Login UI does not display raw RPC errors
